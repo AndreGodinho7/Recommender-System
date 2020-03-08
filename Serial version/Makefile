@@ -5,14 +5,14 @@ CC = gcc
 
 CFLAGS  = -g -Wall
 
-OBJS = main.o input.o factorization.o
+OBJS = matFact.o input.o factorization.o
 EXEC = recsystem
 
 $(EXEC): $(OBJS)
 	$(CC) $(CFFLAGS) -o $(EXEC) $(OBJS)
 
-main.o: main.c input.h
-	$(CC) $(CFLAGS) -c main.c
+matFact.o: matFact.c input.h
+	$(CC) $(CFLAGS) -c matFact.c
 
 input.o: input.c input.h
 	$(CC) $(CFLAGS) -c input.c
