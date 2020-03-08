@@ -21,5 +21,5 @@ factorization.o: factorization.c factorization.h
 	$(CC) $(CFLAGS) -c factorization.c
 
 clean:
-		echo "Apagar todos os ficheiros objeto e executavel"
+		echo "Delete .o files and executable."
 		rm -f *.o $(EXEC)
