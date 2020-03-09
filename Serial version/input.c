@@ -21,11 +21,14 @@
 
 input_values* read_input(char* filename)
 {
+    
     FILE *fpIn;
     input_values* init ;
+   
     int r = 0, c = 0;
     double ele = 0;
-  
+    
+
     init = (input_values*)malloc(sizeof(input_values));
     if (init == NULL){
       printf("ERROR: Out of memory.\n");
@@ -45,9 +48,19 @@ input_values* read_input(char* filename)
 
     init->matrix = MatrixInit(init->nU, init->nI);
     
+
+    init->v= malloc(init->non_zeros * sizeof(_non_zero)); //alocate memory for an array with non_zero positions
+    int i=0;
     while (fscanf(fpIn,"%d %d %lf", &r, &c, &ele) != EOF){ // remaining lines
+        
         init->matrix[r][c] = ele;
+        init->v[i].row=r;          /* populate the array with the non zero information */
+        init->v[i].column=c;
+        init->v[i].value=ele;
+        i++;
+
     }
+    
 
     return init;
 }
