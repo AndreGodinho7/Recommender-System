@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "input.h"
 #define RAND01 ((double) random() / (double) RAND_MAX)
 
 /******************************************************************************
@@ -22,7 +22,7 @@ void printMatrix(double** matrix, int rows, int columns)
     for (int i = 0; i < rows; i++)
     {
         for(int j = 0; j < columns; j++)
-                printf("%lf     ", matrix[i][j]);
+                printf("%f     ", matrix[i][j]);
 
         printf("\n");
     }
@@ -60,6 +60,25 @@ double** MatrixInit(int rows, int columns)
 }
 
 /******************************************************************************
+* drand()
+*
+* Arguments: low - lower boundary
+*            high - upper boundary         
+*
+* Returns: double
+*										
+* Side-Effects: 
+*
+* Description: generates a random number between the two boundaries
+*
+*****************************************************************************/
+
+double drand ( double low, double high )
+{
+    return ( (double)rand() * ( high - low ) ) / (double)RAND_MAX + low;
+}
+
+/******************************************************************************
 * random_fill_LR()
 *
 * Arguments: L - passing by reference pointer to pointer of matrix L
@@ -86,6 +105,24 @@ void random_fill_LR(double*** L, double*** R, int nU, int nI, int nF)
         for(int j = 0; j < nI; j++)
             (*R)[i][j] = RAND01 / (double) nF;
 }
+
+/******************************************************************************
+* matrix_mul()
+*
+* Arguments: firstMatrix - passing by reference pointer to pointer of matrix 
+*            secondMatrix - passing by reference pointer to pointer of matrix 
+*            matrix3 - passing by reference pointer to pointer of matrix 
+*            nU - number of users          
+*            nI - number of items
+*            nF - number of features
+*
+* Returns: void
+*										
+* Side-Effects: 
+*
+* Description: multiple two matrix and give the result to the pointer matrix3
+*
+*****************************************************************************/
 
 void matrix_mul(double ***firstMatrix, double ***secondMatrix, double ***matrix3,int nU, int nI, int nF ){
 
@@ -114,10 +151,36 @@ void matrix_mul(double ***firstMatrix, double ***secondMatrix, double ***matrix3
 		}
 	}     
 }
+/******************************************************************************
+* recalculate_Matrix()
+*
+* Arguments: L - passing by reference pointer to pointer of matrix L
+*            R - passing by reference pointer to pointer of matrix R
+*            pre_L - passing by reference pointer to pointer of matrix pre_L
+*            pre_R - passing by reference pointer to pointer of matrix pre_R
+*            A - passing by reference pointer to pointer of matrix A
+*            B - passing by reference pointer to pointer of matrix B
+*            pre_B - passing by reference pointer to pointer of matrix pre_B
+*            nU - number of users          
+*            nI - number of items
+*            nF - number of features
+*            iter - maximum number of iterations
+*            alpha - converge rate
+*            v - array of type _non_zero with all information about non zero values in matrix A
+*            non_zer0 - number of non zero values in matrix A
+*
+* Returns: void
+*										
+* Side-Effects: 
+*
+* Description: computes the algorithm( minimizing the difference between A and B)
+*
+*****************************************************************************/
 
+void recalculate_Matrix(double*** L, double*** R,double*** pre_L, double*** pre_R,double ***A,double*** B, double*** pre_B,int nU, int nI, int nF,int iter, double alpha, _non_zero *v, int non_zero){
 
-void recalculate_Matrix(double*** L, double*** R,double*** pre_L, double*** pre_R,double ***A,double*** B, double*** pre_B,int nU, int nI, int nF,int iter, double alpha){
-    for(int i=0;i<nU;i++){
+//================================== OLD ==============================
+    /*for(int i=0;i<nU;i++){
         for(int j=0; j<nI;j++){
             if((*A)[i][j]!=0.0){
                 //printf("%f \n",(*A)[i][j]);
@@ -139,5 +202,37 @@ void recalculate_Matrix(double*** L, double*** R,double*** pre_L, double*** pre_
             }
         }
                 //printf("\n");
-    }   
+    }  */
+
+
+// ======================================= NEW ==========================
+
+/* TODO 
+    - Fazer para todas as iteracoes
+    - actualizar pre_L, pre_R etc ...
+    - mais algumas verificacoes maybe
+
+
+*/
+
+    for(int k=0;k<non_zero;k++){        
+        for(int feature=0; feature < nF; feature ++){
+            double sum_L=0;
+            double sum_R=0;
+                                        
+            for(int col=0;col<nI;col++){
+                sum_L=sum_L+(2*((*A)[v[k].row][col]-(*pre_B)[v[k].row][col])*(-(*pre_R)[feature][col]));
+                                                
+            }
+            for(int line=0;line<nU;line++){
+                sum_R=sum_R+(2*((*A)[line][v[k].column]-(*pre_B)[line][v[k].column])*(-(*pre_L)[line][feature]));
+            }
+            (*L)[v[k].row][feature]=(*pre_L)[v[k].row][feature]-alpha*sum_L;
+            (*R)[feature][v[k].column]=(*pre_R)[feature][v[k].column]-alpha*sum_R;
+        }
+               
+                
+    }  
+
+    
 }
