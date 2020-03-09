@@ -3,6 +3,46 @@
 
 #define RAND01 ((double) random() / (double) RAND_MAX)
 
+/******************************************************************************
+* printMatrix()
+*
+* Arguments: matrix - double pointer (matrix)
+*            rows - number of rows of matrix
+*            columns - number of columns of matrix
+*
+* Returns: void
+*										
+* Side-Effects: 
+*
+* Description: prints matrix
+*
+*****************************************************************************/
+void printMatrix(double** matrix, int rows, int columns)
+{
+    for (int i = 0; i < rows; i++)
+    {
+        for(int j = 0; j < columns; j++)
+                printf("%lf     ", matrix[i][j]);
+
+        printf("\n");
+    }
+    printf("\n");
+}
+
+/******************************************************************************
+* MatrixInit()
+*
+* Arguments: rows - number of rows of matrix
+*            columns - number of columns of matrix
+*            
+* Returns: pointer to pointer that points to the matrix
+*										
+* Side-Effects: if any allocation fails exits with exit(1)
+*
+* Description: alocates memory for a matrix with size [rows x columns]
+*
+*****************************************************************************/
+
 double** MatrixInit(int rows, int columns)
 {   
     double** matrix; 
@@ -19,6 +59,22 @@ double** MatrixInit(int rows, int columns)
     return matrix;
 }
 
+/******************************************************************************
+* random_fill_LR()
+*
+* Arguments: L - passing by reference pointer to pointer of matrix L
+*            R - passing by reference pointer to pointer of matrix R
+*            nU - number of users          
+*            nI - number of items
+*            nF - number of features
+*
+* Returns: void
+*										
+* Side-Effects: 
+*
+* Description: random initialization of matrices L and R
+*
+*****************************************************************************/
 void random_fill_LR(double*** L, double*** R, int nU, int nI, int nF)
 {   
     srandom(0);

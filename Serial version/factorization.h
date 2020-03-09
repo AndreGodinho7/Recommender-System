@@ -1,6 +1,8 @@
 #ifndef factorization
 #define factorization
 
+void printMatrix(double** matrix, int rows, int columns);
+
 double** MatrixInit(int rows, int columns);
 
 void random_fill_LR(double*** L, double*** R, int nU, int nI, int nF);

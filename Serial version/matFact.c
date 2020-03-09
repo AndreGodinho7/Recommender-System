@@ -31,58 +31,7 @@ int main(int argc, char* argv[])
     random_fill_LR(&pre_L, &pre_R, init->nU, init->nI, init->nF);
     matrix_mul(&pre_L, &pre_R,&pre_B,init->nU, init->nI, init->nF);
 
-    for (int row=0; row<init->nU; row++)
-    {
-        for(int columns=0; columns<init->nF; columns++)
-            {
-                printf("%lf     ", pre_L[row][columns]);
-            }
-        printf("\n");
-    }
-
-    printf("\n");
-
-    for (int row=0; row<init->nF; row++)
-    {
-        for(int columns=0; columns<init->nI; columns++)
-            {
-                printf("%lf     ", pre_R[row][columns]);
-            }
-        printf("\n");
-    }
-    printf("\n");    
     recalculate_Matrix(&L,&R,&pre_L,&pre_R,&A,&B,&pre_B,init->nU, init->nI, init->nF,init->iter,init->alpha);
-    // só para verificar se está correto 
-    // TODO: apagar ...
-    for (int row=0; row<init->nU; row++)
-    {
-        for(int columns=0; columns<init->nF; columns++)
-            {
-                printf("%lf     ", L[row][columns]);
-            }
-        printf("\n");
-    }
-
-    printf("\n");
-
-    for (int row=0; row<init->nF; row++)
-    {
-        for(int columns=0; columns<init->nI; columns++)
-            {
-                printf("%lf     ", R[row][columns]);
-            }
-        printf("\n");
-    }
-    printf("\n");
-
-    /*for (int row=0; row<init->nU; row++)
-    {
-        for(int columns=0; columns<init->nI; columns++)
-            {
-                printf("%lf     ", pre_B[row][columns]);
-            }
-        printf("\n");
-    }*/
-
+    
     return 0;
 }
