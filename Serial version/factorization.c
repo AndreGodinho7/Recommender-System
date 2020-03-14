@@ -177,7 +177,7 @@ void matrix_mul(double ***firstMatrix, double ***secondMatrix, double ***matrix3
 *
 *****************************************************************************/
 
-void recalculate_Matrix(double*** L, double*** R,double*** pre_L, double*** pre_R,double ***A,double*** B, double*** pre_B,int nU, int nI, int nF,int iter, double alpha, _non_zero *v, int non_zero){
+void recalculate_Matrix(double*** L, double*** R,double*** pre_L, double*** pre_R,double ***A,double*** B, double*** pre_B,double*** L_calc,double*** R_calc,int nU, int nI, int nF,int iter, double alpha, _non_zero *v, int non_zero){
 
 //================================== OLD ==============================
     /*for(int i=0;i<nU;i++){
@@ -215,24 +215,30 @@ void recalculate_Matrix(double*** L, double*** R,double*** pre_L, double*** pre_
 
 */
 
-    for(int k=0;k<non_zero;k++){        
+   
+    for(int k=0;k<non_zero;k++){   
+             
         for(int feature=0; feature < nF; feature ++){
             double sum_L=0;
             double sum_R=0;
                                         
             for(int col=0;col<nI;col++){
-                sum_L=sum_L+(2*((*A)[v[k].row][col]-(*pre_B)[v[k].row][col])*(-(*pre_R)[feature][col]));
+                sum_L=sum_L+(2*(((*A)[v[k].row][col]-(*pre_B)[v[k].row][col])*(-(*pre_R)[feature][col])));
                                                 
             }
             for(int line=0;line<nU;line++){
-                sum_R=sum_R+(2*((*A)[line][v[k].column]-(*pre_B)[line][v[k].column])*(-(*pre_L)[line][feature]));
+                sum_R=sum_R+(2*(((*A)[line][v[k].column]-(*pre_B)[line][v[k].column])*(-(*pre_L)[line][feature])));
             }
-            (*L)[v[k].row][feature]=(*pre_L)[v[k].row][feature]-alpha*sum_L;
-            (*R)[feature][v[k].column]=(*pre_R)[feature][v[k].column]-alpha*sum_R;
+            (*L_calc)[v[k].row][feature]=(*pre_L)[v[k].row][feature]-alpha*sum_L;
+            (*R_calc)[feature][v[k].column]=(*pre_R)[feature][v[k].column]-alpha*sum_R;
         }
+
+        
+        
                
                 
-    }  
+    } 
+ 
 
     
 }
