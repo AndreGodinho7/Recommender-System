@@ -21,17 +21,14 @@ int main(int argc, char* argv[])
 
     L = MatrixInit(init->nU, init->nF);
     R = MatrixInit(init->nF, init->nI);
+    B = MatrixInit(init->nU, init->nI);
     pre_L = MatrixInit(init->nU, init->nF); // Matrix that stores the previous iteration of L
     pre_R = MatrixInit(init->nF, init->nI); // Matrix that stores the previous iteration of R
-    B=MatrixInit(init->nU, init->nI);
-    pre_B=MatrixInit(init->nU, init->nI); // Matrix that stores the previous iteration of B
+    pre_B = MatrixInit(init->nU, init->nI); // Matrix that stores the previous iteration of B
 
     A = init->matrix;
-
     
-    
-    random_fill_LR(&pre_L, &pre_R, init->nU, init->nI, init->nF);
-
+    random_fill_LR(pre_L, pre_R, init->nU, init->nI, init->nF);
 
     /* Para ajudar a ver os resultados */
     printf("Matrix iniciais=== \n");
@@ -39,33 +36,34 @@ int main(int argc, char* argv[])
     printMatrix(pre_L,init->nU,init->nF);
     printf("\n====  pre_R  =====\n");
     printMatrix(pre_R,init->nF,init->nI);
-    matrix_mul(&pre_L, &pre_R,&pre_B,init->nU, init->nI, init->nF);
+
+    matrix_mul(pre_L, pre_R,pre_B,init->nU, init->nI, init->nF);
     printf("\n====  pre_B  =====\n");
     printMatrix(pre_B,init->nU,init->nI);
 
-    double** L_calc, **R_calc; // vao ser usadas para fazer as contas para nao alterar directamente na matrix principal
+    // double** L_calc, **R_calc; // vao ser usadas para fazer as contas para nao alterar directamente na matrix principal
    
-
    /*Do all iterations */
-    for(int i=0;i<init->iter;i++){
-        L_calc = MatrixInit(init->nU,init->nF);
-        R_calc = MatrixInit(init->nF,init->nI);
-        /*update the matrix*/
-        if(i >0){
-            pre_L=L;
-            pre_R=R;
-            pre_B=B;
-        }
-        else{/*if its the first iteration calculate matrix B */
-            matrix_mul(&pre_L, &pre_R,&pre_B,init->nU, init->nI, init->nF); 
-        }
-        
+    for(int i = 0 ; i < init->iter ; i++){
+        //L_calc = MatrixInit(init->nU,init->nF);
+        //R_calc = MatrixInit(init->nF,init->nI);
 
-        recalculate_Matrix(&L,&R,&pre_L,&pre_R,&A,&B,&pre_B,&L_calc,&R_calc,init->nU, init->nI, init->nF,init->iter,init->alpha,init->v ,init->non_zeros);
-        L=L_calc;
-        R=R_calc;
-        matrix_mul(&L, &R,&B,init->nU, init->nI, init->nF);
+        /*update the matrix*/
+        if(i > 0 ){
+            pre_L = L;
+            pre_R = R;
+            pre_B = B;
+        }
+        //else{/*if its the first iteration calculate matrix B */
+        //    matrix_mul(&pre_L, &pre_R,&pre_B,init->nU, init->nI, init->nF); 
+        //}
         
+        recalculate_Matrix(L, R, pre_L, pre_R, A, B, pre_B,init->nU, init->nI, init->nF, init->iter,init->alpha,init->v ,init->non_zeros);
+
+        //L = L_calc;
+        //R = R_calc;
+        matrix_mul(L, R, B, init->nU, init->nI, init->nF);
+
         if(i<5){
             /* Para ajudar a ver os resultados */
             printf("Matrix iter = %d",i);
@@ -76,9 +74,6 @@ int main(int argc, char* argv[])
             printf("\n====  B  =====\n");
             printMatrix(B,init->nU,init->nI);
         }
-        
-
-        
     }
     
     printMatrix(B,init->nU,init->nI);

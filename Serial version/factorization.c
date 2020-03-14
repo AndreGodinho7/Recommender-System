@@ -94,16 +94,16 @@ double drand ( double low, double high )
 * Description: random initialization of matrices L and R
 *
 *****************************************************************************/
-void random_fill_LR(double*** L, double*** R, int nU, int nI, int nF)
+void random_fill_LR(double** L, double** R, int nU, int nI, int nF)
 {   
     srandom(0);
     for(int i = 0; i < nU; i++)
         for(int j = 0; j < nF; j++)
-            (*L)[i][j] = RAND01 / (double) nF;
+            L[i][j] = RAND01 / (double) nF;
 
     for(int i = 0; i < nF; i++)
         for(int j = 0; j < nI; j++)
-            (*R)[i][j] = RAND01 / (double) nF;
+            R[i][j] = RAND01 / (double) nF;
 }
 
 /******************************************************************************
@@ -124,32 +124,18 @@ void random_fill_LR(double*** L, double*** R, int nU, int nI, int nF)
 *
 *****************************************************************************/
 
-void matrix_mul(double ***firstMatrix, double ***secondMatrix, double ***matrix3,int nU, int nI, int nF ){
+void matrix_mul(double **firstMatrix, double **secondMatrix, double **matrix3,int nU, int nI, int nF ){
+    int rowFirst= nU; // sizeof(matrix_1)/sizeof(matrix_1[0]);
+    int columnFirst =nF; // sizeof(matrix_1[0])/sizeof(matrix_1[0][0]);
+    int columnSecond = nI; //sizeof(matrix_2[0])/sizeof(matrix_2[0][0]);
 
-
-    int rowFirst= nU;//sizeof(matrix_1)/sizeof(matrix_1[0]);
-    int columnFirst =nF;// sizeof(matrix_1[0])/sizeof(matrix_1[0][0]);
-    
-    int columnSecond = nI;//sizeof(matrix_2[0])/sizeof(matrix_2[0][0]);
-        
-            
-        
-    double result=0.0;
-	for(int i = 0; i < rowFirst; ++i)
-	{
-		for(int j = 0; j < columnSecond; ++j)
-		{
-			for(int k=0; k<columnFirst; ++k)
-			{
-               
-                result=((*firstMatrix)[i][k] * (*secondMatrix)[k][j]);
-				(*matrix3)[i][j] = (*matrix3)[i][j]+ result ;
-                                
-                                
-			}
-                        
-		}
-	}     
+	for(int i = 0; i < rowFirst; i++)
+		for(int j = 0; j < columnSecond; j++)
+            {
+                matrix3[i][j] = 0;
+			    for(int k = 0; k < columnFirst; k++)              
+				    matrix3[i][j] += (firstMatrix[i][k] * secondMatrix[k][j]);;
+            }
 }
 /******************************************************************************
 * recalculate_Matrix()
@@ -177,7 +163,6 @@ void matrix_mul(double ***firstMatrix, double ***secondMatrix, double ***matrix3
 *
 *****************************************************************************/
 
-void recalculate_Matrix(double*** L, double*** R,double*** pre_L, double*** pre_R,double ***A,double*** B, double*** pre_B,double*** L_calc,double*** R_calc,int nU, int nI, int nF,int iter, double alpha, _non_zero *v, int non_zero){
 
 //================================== OLD ==============================
     /*for(int i=0;i<nU;i++){
@@ -215,30 +200,26 @@ void recalculate_Matrix(double*** L, double*** R,double*** pre_L, double*** pre_
 
 */
 
-   
-    for(int k=0;k<non_zero;k++){   
-             
-        for(int feature=0; feature < nF; feature ++){
-            double sum_L=0;
-            double sum_R=0;
+void recalculate_Matrix(double** L, double** R,double** pre_L, double** pre_R,double **A,double** B, double** pre_B,int nU, int nI, int nF,int iter, double alpha, _non_zero *v, int non_zero){
+    double sum_L = 0;
+    double sum_R = 0;
+    int k = 0;
+    int feature = 0;
+    int col = 0;
+
+    for(k = 0 ; k < non_zero ;k++){   
+        for(feature = 0; feature < nF; feature ++){
+            sum_L = 0;
+            sum_R = 0;
                                         
-            for(int col=0;col<nI;col++){
-                sum_L=sum_L+(2*(((*A)[v[k].row][col]-(*pre_B)[v[k].row][col])*(-(*pre_R)[feature][col])));
+            for(col = 0; col < nI; col++)
+                sum_L += (2*((A[v[k].row][col]-pre_B[v[k].row][col])*(-pre_R[feature][col])));
                                                 
-            }
-            for(int line=0;line<nU;line++){
-                sum_R=sum_R+(2*(((*A)[line][v[k].column]-(*pre_B)[line][v[k].column])*(-(*pre_L)[line][feature])));
-            }
-            (*L_calc)[v[k].row][feature]=(*pre_L)[v[k].row][feature]-alpha*sum_L;
-            (*R_calc)[feature][v[k].column]=(*pre_R)[feature][v[k].column]-alpha*sum_R;
+            for(int line=0; line < nU ; line++)
+                sum_R += (2*((A[line][v[k].column]-pre_B[line][v[k].column])*(-pre_L[line][feature])));
+            
+            L[v[k].row][feature] = pre_L[v[k].row][feature] - alpha*sum_L;
+            R[feature][v[k].column] = pre_R[feature][v[k].column] - alpha*sum_R;
         }
-
-        
-        
-               
-                
     } 
- 
-
-    
 }

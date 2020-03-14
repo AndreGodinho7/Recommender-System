@@ -48,7 +48,6 @@ input_values* read_input(char* filename)
 
     init->matrix = MatrixInit(init->nU, init->nI);
     
-
     init->v= malloc(init->non_zeros * sizeof(_non_zero)); //alocate memory for an array with non_zero positions
     int i=0;
     while (fscanf(fpIn,"%d %d %lf", &r, &c, &ele) != EOF){ // remaining lines
@@ -60,7 +59,6 @@ input_values* read_input(char* filename)
         i++;
 
     }
-    
 
     return init;
 }
