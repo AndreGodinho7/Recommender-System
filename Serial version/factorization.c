@@ -22,7 +22,9 @@ void printMatrix(double** matrix, int rows, int columns)
     for (int i = 0; i < rows; i++)
     {
         for(int j = 0; j < columns; j++)
+                
                 printf("%f     ", matrix[i][j]);
+                
 
         printf("\n");
     }
@@ -208,18 +210,58 @@ void recalculate_Matrix(double** L, double** R,double** pre_L, double** pre_R,do
     int col = 0;
 
     for(k = 0 ; k < non_zero ;k++){   
+        //printf(" linha: %d  coluna : %d\n",v[k].row,v[k].column);
         for(feature = 0; feature < nF; feature ++){
             sum_L = 0;
             sum_R = 0;
                                         
-            for(col = 0; col < nI; col++)
-                sum_L += 2 * (A[v[k].row][col]-pre_B[v[k].row][col]) * (-pre_R[feature][col]);
-                                                
-            for(int line=0; line < nU ; line++)
-                sum_R += 2 * (A[line][v[k].column]-pre_B[line][v[k].column]) * (-pre_L[line][feature]);
-            
+            for(col = 0; col < nI; col++){
+                if(A[v[k].row][col]!=0)
+                    sum_L += (2*((A[v[k].row][col]-pre_B[v[k].row][col])*(-pre_R[feature][col])));
+            }                                  
+            for(int line=0; line < nU ; line++){
+                if(A[line][v[k].column]!=0)
+                    sum_R += (2*((A[line][v[k].column]-pre_B[line][v[k].column])*(-pre_L[line][feature])));
+            }
             L[v[k].row][feature] = pre_L[v[k].row][feature] - alpha*sum_L;
             R[feature][v[k].column] = pre_R[feature][v[k].column] - alpha*sum_R;
         }
     } 
+}
+
+
+
+void copy_matrix(double** original, double** copied,int rows, int columns){
+    for(int i= 0; i<rows;i++){
+        for(int j=0;j<columns;j++){
+            copied[i][j]=original[i][j];
+        }
+    }
+}
+
+void create_output(double** B,int rows, int columns,char* filename,double** A){
+    
+    //int size = strlen(filename);
+    //printf("%d",size); 
+
+    for(int i = 0 ; i < rows ;i++){
+        double max=0;
+        int item;
+        for(int j=0;j<columns;j++){
+            if(A[i][j]==0.00){
+                if(B[i][j]>max){
+                    max=B[i][j];
+                    item=j;
+                }
+            }
+            /*if(i==11){
+                printf("value de %d = %f",j,B[i][j]);
+            }*/
+        }
+        //if(i==11){
+            printf(" %f ",max);
+        //}
+        printf("%d\n",item);
+
+    }
 }

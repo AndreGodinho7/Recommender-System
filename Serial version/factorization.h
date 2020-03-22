@@ -12,5 +12,8 @@ void matrix_mul(double **firstMatrix, double **secondMatrix,double **mult_matrix
 //void recalculate_Matrix(double*** L, double*** R,double*** pre_L, double*** pre_R,double ***A,double*** B, double*** pre_B,double*** L_calc,double*** R_calc,int nU, int nI, int nF,int iter, double alpha, _non_zero *v, int non_zero);
 void recalculate_Matrix(double** L, double** R,double** pre_L, double** pre_R,double **A,double** B, double** pre_B, int nU, int nI, int nF,int iter, double alpha, _non_zero *v, int non_zero);
 
+void copy_matrix(double** original, double** copied,int rows, int columns);
+
+void create_output(double** B,int rows, int columns,char* filename,double** A);
 
 #endif
