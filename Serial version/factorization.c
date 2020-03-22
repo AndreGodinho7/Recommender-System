@@ -213,10 +213,10 @@ void recalculate_Matrix(double** L, double** R,double** pre_L, double** pre_R,do
             sum_R = 0;
                                         
             for(col = 0; col < nI; col++)
-                sum_L += (2*((A[v[k].row][col]-pre_B[v[k].row][col])*(-pre_R[feature][col])));
+                sum_L += 2 * (A[v[k].row][col]-pre_B[v[k].row][col]) * (-pre_R[feature][col]);
                                                 
             for(int line=0; line < nU ; line++)
-                sum_R += (2*((A[line][v[k].column]-pre_B[line][v[k].column])*(-pre_L[line][feature])));
+                sum_R += 2 * (A[line][v[k].column]-pre_B[line][v[k].column]) * (-pre_L[line][feature]);
             
             L[v[k].row][feature] = pre_L[v[k].row][feature] - alpha*sum_L;
             R[feature][v[k].column] = pre_R[feature][v[k].column] - alpha*sum_R;
