@@ -109,6 +109,32 @@ void random_fill_LR(double** L, double** R, int nU, int nI, int nF)
 }
 
 /******************************************************************************
+* transpose()
+*
+* Arguments: matrix - pointer to pointer of matrix to be tranposed
+*            rows - number of rows of matrix
+*            columns - number of columns of matrix
+*            
+* Returns: pointer to pointer of matrix
+*										
+* Side-Effects: if any allocation fails exits with exit(1)
+*               memory of input matrix is freed
+*
+* Description: allocates memory for a matrix [columns x rows] and copies matrix[i][j]
+*              values to the allocated matrix result[j]
+*****************************************************************************/
+
+double** transpose(double** matrix, int rows, int columns)
+{   
+    double** result = MatrixInit(columns, rows);
+    for (int i = 0; i < rows; ++i)
+        for (int j = 0; j < columns; ++j)
+            result[j][i] = matrix[i][j];
+    return result;
+}
+
+
+/******************************************************************************
 * matrix_mul()
 *
 * Arguments: firstMatrix - passing by reference pointer to pointer of matrix 
@@ -126,17 +152,29 @@ void random_fill_LR(double** L, double** R, int nU, int nI, int nF)
 *
 *****************************************************************************/
 
-void matrix_mul(double **firstMatrix, double **secondMatrix, double **matrix3,int nU, int nI, int nF ){
-    int rowFirst= nU; // sizeof(matrix_1)/sizeof(matrix_1[0]);
-    int columnFirst =nF; // sizeof(matrix_1[0])/sizeof(matrix_1[0][0]);
-    int columnSecond = nI; //sizeof(matrix_2[0])/sizeof(matrix_2[0][0]);
-
-	for(int i = 0; i < rowFirst; i++)
-		for(int j = 0; j < columnSecond; j++)
+void matrix_mul(double **firstMatrix, double **secondMatrix, double **result,int nU, int nI, int nF ){
+    // result[n1][n3] = firstMatrix[n1][n2] x secondMatrix[n3][n2] (transposed)
+    int n1 = nU; // sizeof(matrix_1)/sizeof(matrix_1[0]);
+    int n2 = nF; // sizeof(matrix_1[0])/sizeof(matrix_1[0][0]);
+    int n3 = nI; //sizeof(matrix_2[0])/sizeof(matrix_2[0][0]);
+    double tmp;
+    
+/*    for(int i = 0; i < n1; i++)
+		for(int j = 0; j < n3; j++)
             {
-                matrix3[i][j] = 0;
-			    for(int k = 0; k < columnFirst; k++)              
-				    matrix3[i][j] += (firstMatrix[i][k] * secondMatrix[k][j]);;
+                tmp = 0;
+			    for(int k = 0; k < n2; k++)    
+                    tmp += firstMatrix[i][k] * secondMatrix[k][j];         
+				    result[i][j] = tmp;
+            } */
+
+    for(int i = 0; i < n1; i++)
+		for(int j = 0; j < n3; j++)
+            {
+                tmp = 0;
+			    for(int k = 0; k < n2; k++)
+                    tmp += firstMatrix[i][k] * secondMatrix[j][k];         
+				    result[i][j] = tmp;
             }
 }
 /******************************************************************************
@@ -164,42 +202,10 @@ void matrix_mul(double **firstMatrix, double **secondMatrix, double **matrix3,in
 * Description: computes the algorithm( minimizing the difference between A and B)
 *
 *****************************************************************************/
-
-
-//================================== OLD ==============================
-    /*for(int i=0;i<nU;i++){
-        for(int j=0; j<nI;j++){
-            if((*A)[i][j]!=0.0){
-                //printf("%f \n",(*A)[i][j]);
-                for(int feature=0; feature < nF; feature ++){
-                    double sum_L=0;
-                    double sum_R=0;
-                                        
-                    for(int col=0;col<nI;col++){
-                        //printf("im here\n");
-                        sum_L=sum_L+(2*((*A)[i][col]-(*pre_B)[i][col])*(-(*pre_R)[feature][col]));
-                                                
-                    }
-                    for(int line=0;line<nU;line++){
-                        sum_R=sum_R+(2*((*A)[line][j]-(*pre_B)[line][j])*(-(*pre_L)[line][feature]));
-                    }
-                    (*L)[i][feature]=(*pre_L)[i][feature]-alpha*sum_L;
-                    (*R)[feature][j]=(*pre_R)[feature][j]-alpha*sum_R;
-                }
-            }
-        }
-                //printf("\n");
-    }  */
-
-
-// ======================================= NEW ==========================
-
 /* TODO 
     - Fazer para todas as iteracoes
     - actualizar pre_L, pre_R etc ...
     - mais algumas verificacoes maybe
-
-
 */
 
 void recalculate_Matrix(double** L, double** R,double** pre_L, double** pre_R,double **A,double** B, double** pre_B,int nU, int nI, int nF,int iter, double alpha, _non_zero *v, int non_zero){
@@ -217,14 +223,16 @@ void recalculate_Matrix(double** L, double** R,double** pre_L, double** pre_R,do
                                         
             for(col = 0; col < nI; col++){
                 if(A[v[k].row][col]!=0)
-                    sum_L += (2*((A[v[k].row][col]-pre_B[v[k].row][col])*(-pre_R[feature][col])));
+                    //sum_L += (2*((A[v[k].row][col]-pre_B[v[k].row][col])*(-pre_R[feature][col])));
+                    sum_L += (2*((A[v[k].row][col]-pre_B[v[k].row][col])*(-pre_R[col][feature])));
             }                                  
             for(int line=0; line < nU ; line++){
                 if(A[line][v[k].column]!=0)
                     sum_R += (2*((A[line][v[k].column]-pre_B[line][v[k].column])*(-pre_L[line][feature])));
             }
             L[v[k].row][feature] = pre_L[v[k].row][feature] - alpha*sum_L;
-            R[feature][v[k].column] = pre_R[feature][v[k].column] - alpha*sum_R;
+            //R[feature][v[k].column] = pre_R[feature][v[k].column] - alpha*sum_R;
+            R[v[k].column][feature] = pre_R[v[k].column][feature] - alpha*sum_R; //add
         }
     } 
 }
@@ -262,6 +270,5 @@ void create_output(double** B,int rows, int columns,char* filename,double** A){
             printf(" %f ",max);
         //}
         printf("%d\n",item);
-
     }
 }
