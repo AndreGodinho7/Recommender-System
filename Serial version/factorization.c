@@ -23,7 +23,7 @@ void printMatrix(double** matrix, int rows, int columns)
     {
         for(int j = 0; j < columns; j++)
                 
-                printf("%f     ", matrix[i][j]);
+            printf("%f     ", matrix[i][j]);
                 
 
         printf("\n");
@@ -139,6 +139,16 @@ void matrix_mul(double **firstMatrix, double **secondMatrix, double **matrix3,in
 				    matrix3[i][j] += (firstMatrix[i][k] * secondMatrix[k][j]);;
             }
 }
+
+double internal_product( double *row ,double *column, int nF){
+    double sum=0.0;
+    for(int i=0;i<nF;i++){
+        sum+=row[i]*column[i];
+    }
+    return sum;
+}
+
+
 /******************************************************************************
 * recalculate_Matrix()
 *
@@ -208,7 +218,7 @@ void recalculate_Matrix(double** L, double** R,double** pre_L, double** pre_R,do
     int k = 0;
     int feature = 0;
     int col = 0;
-
+    
     for(k = 0 ; k < non_zero ;k++){   
         //printf(" linha: %d  coluna : %d\n",v[k].row,v[k].column);
         for(feature = 0; feature < nF; feature ++){
@@ -216,8 +226,11 @@ void recalculate_Matrix(double** L, double** R,double** pre_L, double** pre_R,do
             sum_R = 0;
                                         
             for(col = 0; col < nI; col++){
-                if(A[v[k].row][col]!=0)
+                if(A[v[k].row][col]!=0){
+                    //new_function line- L column -R
+
                     sum_L += (2*((A[v[k].row][col]-pre_B[v[k].row][col])*(-pre_R[feature][col])));
+                }
             }                                  
             for(int line=0; line < nU ; line++){
                 if(A[line][v[k].column]!=0)
@@ -227,6 +240,7 @@ void recalculate_Matrix(double** L, double** R,double** pre_L, double** pre_R,do
             R[feature][v[k].column] = pre_R[feature][v[k].column] - alpha*sum_R;
         }
     } 
+
 }
 
 
@@ -254,13 +268,8 @@ void create_output(double** B,int rows, int columns,char* filename,double** A){
                     item=j;
                 }
             }
-            /*if(i==11){
-                printf("value de %d = %f",j,B[i][j]);
-            }*/
         }
-        //if(i==11){
-            printf(" %f ",max);
-        //}
+    
         printf("%d\n",item);
 
     }

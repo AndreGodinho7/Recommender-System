@@ -29,15 +29,17 @@ int main(int argc, char* argv[])
     A = init->matrix;
     
     random_fill_LR(pre_L, pre_R, init->nU, init->nI, init->nF);
+    copy_matrix(pre_L,L,init->nU,init->nF);
+    copy_matrix(pre_R,R,init->nF,init->nI); 
 
     /* Para ajudar a ver os resultados */
     /*printf("Matrix iniciais=== \n");
     printf("\n====  pre_L  =====\n");
-    printMatrix(pre_L,init->nU,init->nF);
+    printMatrix(L,init->nU,init->nF);
     printf("\n====  pre_R  =====\n");
-    printMatrix(pre_R,init->nF,init->nI);
+    printMatrix(pre_R,init->nF,init->nI);*/
 
-    matrix_mul(pre_L, pre_R,pre_B,init->nU, init->nI, init->nF);
+    /*matrix_mul(pre_L, pre_R,pre_B,init->nU, init->nI, init->nF);
     printf("\n====  pre_B  =====\n");
     printMatrix(pre_B,init->nU,init->nI);*/
 
@@ -51,6 +53,7 @@ int main(int argc, char* argv[])
             copy_matrix(L,pre_L,init->nU,init->nF);
             copy_matrix(R,pre_R,init->nF,init->nI);
             copy_matrix(B,pre_B,init->nU,init->nI);
+            
         }
 
         
@@ -58,7 +61,7 @@ int main(int argc, char* argv[])
 
         matrix_mul(L, R, B, init->nU, init->nI, init->nF);
 
-        if(i<5){
+        if(i<2){
             
             /* Para ajudar a ver os resultados */
             /*printf("Matrix iter = %d",i);
@@ -71,9 +74,12 @@ int main(int argc, char* argv[])
         }
 
     }
-    //printf("Matrix Final B\n\n");
+    //printf("LInha 11 \n\n");
     //printMatrix(B,init->nU,init->nI);
-    
+    //printf("LInha L \n\n");
+    //printMatrix(L,init->nU,init->nF);
+    //printf("LInha R \n\n");
+    //printMatrix(R,init->nF,init->nI);    
     create_output(B,init->nU, init->nI,argv[1],A);
 
     return 0;
