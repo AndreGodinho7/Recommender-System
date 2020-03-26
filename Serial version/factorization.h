@@ -1,6 +1,12 @@
 #ifndef factorization
 #define factorization
 
+
+
+
+
+
+
 void printMatrix(double** matrix, int rows, int columns);
 
 double** MatrixInit(int rows, int columns);

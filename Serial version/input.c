@@ -53,9 +53,10 @@ input_values* read_input(char* filename)
     while (fscanf(fpIn,"%d %d %lf", &r, &c, &ele) != EOF){ // remaining lines
         
         init->matrix[r][c] = ele;
-        init->v[i].row = r;          /* populate the array with the non zero information */
-        init->v[i].column = c;
-        init->v[i].value = ele;
+        init->v[i].row=r;          /* populate the array with the non zero information */
+        init->v[i].column=c;
+        init->v[i].value=ele;
+        
         i++;
 
     }
