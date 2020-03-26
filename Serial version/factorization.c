@@ -222,33 +222,34 @@ void recalculate_Matrix(double** L, double** R,double** pre_L, double** pre_R,do
     double sum_L = 0;
     double sum_R = 0;
     int k = 0;
-    int feature = 0;
+    
     int col = 0;
     
-    for(k = 0 ; k < non_zero ;k++){   
+    for(int num_zero = 0 ; num_zero < non_zero ;num_zero++){   
         //printf(" linha: %d  coluna : %d\n",v[k].row,v[k].column);
-        for(feature = 0; feature < nF; feature ++){
+        for(k = 0; k < nF; k ++){
             sum_L = 0;
             sum_R = 0;
-                                       
+            
+                   
             for(col = 0; col < nI; col++){
                 
-                if(A[v[k].row][col]!=0){
+                if(A[v[num_zero].row][col]!=0){
                     //sum_L += (2*((A[v[k].row][col]-pre_B[v[k].row][col])*(-pre_R[feature][col])));
                     
-                    sum_L += (2*((A[v[k].row][col]-pre_B[v[k].row][col])*(-pre_R[col][feature])));
+                    sum_L += (2*((A[v[num_zero].row][col]-pre_B[v[num_zero].row][col])*(-pre_R[col][k])));
                     //sum_L += (2*((A[v[k].row][col]-internal_product(pre_L[v[k].row],pre_R[col],nF))*(-pre_R[col][feature])));
                 }  
             }                                  
             for(int line=0; line < nU ; line++){
-                if(A[line][v[k].column]!=0){
-                    sum_R += (2*((A[line][v[k].column]-pre_B[line][v[k].column])*(-pre_L[line][feature])));
+                if(A[line][v[num_zero].column]!=0){
+                    sum_R += (2*((A[line][v[num_zero].column]-pre_B[line][v[num_zero].column])*(-pre_L[line][k])));
                     //sum_R += (2*((A[line][v[k].column]-internal_product(pre_L[line],pre_R[v[k].column],nF))*(-pre_L[line][feature])));
                 }
             }
-            L[v[k].row][feature] = pre_L[v[k].row][feature] - alpha*sum_L;
+            L[v[num_zero].row][k] = pre_L[v[num_zero].row][k] - alpha*sum_L;
             //R[feature][v[k].column] = pre_R[feature][v[k].column] - alpha*sum_R;
-            R[v[k].column][feature] = pre_R[v[k].column][feature] - alpha*sum_R; //add
+            R[v[num_zero].column][k] = pre_R[v[num_zero].column][k] - alpha*sum_R; //add
         }
     } 
 

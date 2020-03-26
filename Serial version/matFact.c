@@ -21,7 +21,11 @@ int main(int argc, char* argv[])
     };
 
     init = read_input(argv[1]);
-
+    for(int j=0;j<init->non_zeros;j++){
+        printf("row :%d ",init->v[j].row);
+        printf("column :%d ",init->v[j].column);
+        printf("value :%f \n",init->v[j].value);
+    }
     L = MatrixInit(init->nU, init->nF);
     //R = MatrixInit(init->nF, init->nI);
     R = MatrixInit(init->nI, init->nF);
