@@ -230,20 +230,19 @@ void recalculate_Matrix(double** L, double** R,double** pre_L, double** pre_R,do
         for(feature = 0; feature < nF; feature ++){
             sum_L = 0;
             sum_R = 0;
-                                       
+            
             for(col = 0; col < nI; col++){
                 
                 if(A[v[k].row][col]!=0){
                     //sum_L += (2*((A[v[k].row][col]-pre_B[v[k].row][col])*(-pre_R[feature][col])));
-                    
-                    sum_L += (2*((A[v[k].row][col]-pre_B[v[k].row][col])*(-pre_R[col][feature])));
-                    //sum_L += (2*((A[v[k].row][col]-internal_product(pre_L[v[k].row],pre_R[col],nF))*(-pre_R[col][feature])));
+                    //sum_L += (2*((A[v[k].row][col]-pre_B[v[k].row][col])*(-pre_R[col][feature])));
+                    sum_L += (2*((A[v[k].row][col]-internal_product(pre_L[v[k].row],pre_R[col],nF))*(-pre_R[col][feature])));
                 }  
             }                                  
             for(int line=0; line < nU ; line++){
                 if(A[line][v[k].column]!=0){
-                    sum_R += (2*((A[line][v[k].column]-pre_B[line][v[k].column])*(-pre_L[line][feature])));
-                    //sum_R += (2*((A[line][v[k].column]-internal_product(pre_L[line],pre_R[v[k].column],nF))*(-pre_L[line][feature])));
+                    //sum_R += (2*((A[line][v[k].column]-pre_B[line][v[k].column])*(-pre_L[line][feature])));
+                    sum_R += (2*((A[line][v[k].column]-internal_product(pre_L[line],pre_R[v[k].column],nF))*(-pre_L[line][feature])));
                 }
             }
             L[v[k].row][feature] = pre_L[v[k].row][feature] - alpha*sum_L;
@@ -253,8 +252,6 @@ void recalculate_Matrix(double** L, double** R,double** pre_L, double** pre_R,do
     } 
 
 }
-
-
 
 void copy_matrix(double** original, double** copied,int rows, int columns){
     for(int i= 0; i<rows;i++){
