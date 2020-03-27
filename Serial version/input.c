@@ -44,21 +44,20 @@ input_values* read_input(char* filename)
     fscanf(fpIn, "%d", &(init->iter) ); // 1st line
     fscanf(fpIn, "%lf", &(init->alpha)); // 2nd line
     fscanf(fpIn, "%d", &(init->nF)); // 3rd line
-    fscanf(fpIn, "%d %d %d", &init->nU, &init->nI, &init->non_zeros); // 4th line
+    fscanf(fpIn, "%d %d %d", &init->nU, &init->nI, &init->num_zeros); // 4th line
 
+    init->v = malloc(init->num_zeros * sizeof(non_zero)); //alocate memory for an array with non_zero positions
     init->matrix = MatrixInit(init->nU, init->nI);
-    
-    init->v= malloc(init->non_zeros * sizeof(_non_zero)); //alocate memory for an array with non_zero positions
+
     int i=0;
     while (fscanf(fpIn,"%d %d %lf", &r, &c, &ele) != EOF){ // remaining lines
         
+        init->v[i].row = r;          /* populate the array with the non zero information */
+        init->v[i].column = c;
+        init->v[i].A = ele;
         init->matrix[r][c] = ele;
-        init->v[i].row=r;          /* populate the array with the non zero information */
-        init->v[i].column=c;
-        init->v[i].value=ele;
         
         i++;
-
     }
 
     return init;

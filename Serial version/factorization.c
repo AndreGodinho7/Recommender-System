@@ -96,16 +96,16 @@ double drand ( double low, double high )
 * Description: random initialization of matrices L and R
 *
 *****************************************************************************/
-void random_fill_LR(double** L, double** R, int nU, int nI, int nF)
+void random_fill_LR(double** L_, double** R_, int nU, int nI, int nF)
 {   
     srandom(0);
     for(int i = 0; i < nU; i++)
         for(int j = 0; j < nF; j++)
-            L[i][j] = RAND01 / (double) nF;
+            L_[i][j] = RAND01 / (double) nF;
 
     for(int i = 0; i < nF; i++)
         for(int j = 0; j < nI; j++)
-            R[i][j] = RAND01 / (double) nF;
+            R_[i][j] = RAND01 / (double) nF;
 }
 
 /******************************************************************************
@@ -152,12 +152,12 @@ double** transpose(double** matrix, int rows, int columns)
 *
 *****************************************************************************/
 
-void matrix_mul(double **firstMatrix, double **secondMatrix, double **result,int nU, int nI, int nF ){
+void matrix_mul(double **firstMatrix, double **secondMatrix, non_zero* v, int num_zeros ,int nF){
     // result[n1][n3] = firstMatrix[n1][n2] x secondMatrix[n3][n2] (transposed)
-    int n1 = nU; // sizeof(matrix_1)/sizeof(matrix_1[0]);
-    int n2 = nF; // sizeof(matrix_1[0])/sizeof(matrix_1[0][0]);
-    int n3 = nI; //sizeof(matrix_2[0])/sizeof(matrix_2[0][0]);
-    double tmp;
+    //int n1 = nU; // sizeof(matrix_1)/sizeof(matrix_1[0]);
+    //int n2 = nF; // sizeof(matrix_1[0])/sizeof(matrix_1[0][0]);
+    //int n3 = nI; //sizeof(matrix_2[0])/sizeof(matrix_2[0][0]);
+    //double tmp;
     
 /*    for(int i = 0; i < n1; i++)
 		for(int j = 0; j < n3; j++)
@@ -167,7 +167,7 @@ void matrix_mul(double **firstMatrix, double **secondMatrix, double **result,int
                     tmp += firstMatrix[i][k] * secondMatrix[k][j];         
 				    result[i][j] = tmp;
             } */
-    
+    /*
     for(int i = 0; i < n1; i++)
 		for(int j = 0; j < n3; j++)
             {
@@ -175,15 +175,26 @@ void matrix_mul(double **firstMatrix, double **secondMatrix, double **result,int
 			    for(int k = 0; k < n2; k++)
                     tmp += firstMatrix[i][k] * secondMatrix[j][k];       
 				    result[i][j] = tmp;
-            }
+            }*/
+    for (int z = 0; z < num_zeros; z++){
+        int i = v[z].row;
+        int j = v[z].column;
+        v[z].B = 0;
+        for (int k = 0; k < nF; k++)
+        v[z].B += firstMatrix[i][k]*secondMatrix[j][k];
+    }
+
 }
 
-double internal_product( double *row ,double *column, int nF){
-    double sum=0.0;
-    for(int i=0;i<nF;i++){
-        sum+=row[i]*column[i];
-    }
-    return sum;
+void zero_LR(double** L, double** R, int nU, int nI, int nF){
+    for(int u = 0; u < nU; u++)
+        for(int f = 0; f < nF; f++)
+            L[u][f] = 0;
+
+    for(int i = 0; i < nI; i++)
+        for(int f = 0; f < nF; f++)
+            R[i][f] = 0;
+
 }
 
 
@@ -212,46 +223,58 @@ double internal_product( double *row ,double *column, int nF){
 * Description: computes the algorithm( minimizing the difference between A and B)
 *
 *****************************************************************************/
-/* TODO 
-    - Fazer para todas as iteracoes
-    - actualizar pre_L, pre_R etc ...
-    - mais algumas verificacoes maybe
-*/
 
-void recalculate_Matrix(double** L, double** R,double** pre_L, double** pre_R,double **A,double** B, double** pre_B,int nU, int nI, int nF,int iter, double alpha, _non_zero *v, int non_zero){
-    double sum_L = 0;
-    double sum_R = 0;
-    int k = 0;
-    
-    int col = 0;
-    
+void recalculate_Matrix(double** L, double** R, double** pre_L, double** pre_R, int nU, int nI, int nF, double alpha, non_zero *v, int num_zeros){
+    int i, j, z;
+    double a, b;
+/*
     for(int num_zero = 0 ; num_zero < non_zero ;num_zero++){   
-        //printf(" linha: %d  coluna : %d\n",v[k].row,v[k].column);
-        for(k = 0; k < nF; k ++){
-            sum_L = 0;
-            sum_R = 0;
-            
-                   
-            for(col = 0; col < nI; col++){
-                
-                if(A[v[num_zero].row][col]!=0){
-                    //sum_L += (2*((A[v[k].row][col]-pre_B[v[k].row][col])*(-pre_R[feature][col])));
+        //printf(" linha: %d  juna : %d\n",v[k].row,v[k].column);
+        for(int k = 0; k < nF; k ++){
+            double sum_L = 0;
+            double sum_R = 0;
+            for(int j = 0; j < nI; j++){    
+                if(A[v[num_zero].row][j] != 0)
+                    //sum_L += (2*((A[v[k].row][j]-pre_B[v[k].row][j])*(-pre_R[feature][j])));
+                    //sum_L += (20*((A[v[k].row][j]-internal_product(pre_L[v[k].row],pre_R[j],nF))*(-pre_R[j][k])));
+                    // alterar o *2 para o final
+                    sum_L += (2*((A[v[num_zero].row][j]-pre_B[v[num_zero].row][j])*(-pre_R[j][k]))); 
                     
-                    sum_L += (2*((A[v[num_zero].row][col]-pre_B[v[num_zero].row][col])*(-pre_R[col][k])));
-                    //sum_L += (2*((A[v[k].row][col]-internal_product(pre_L[v[k].row],pre_R[col],nF))*(-pre_R[col][feature])));
-                }  
             }                                  
-            for(int line=0; line < nU ; line++){
-                if(A[line][v[num_zero].column]!=0){
-                    sum_R += (2*((A[line][v[num_zero].column]-pre_B[line][v[num_zero].column])*(-pre_L[line][k])));
-                    //sum_R += (2*((A[line][v[k].column]-internal_product(pre_L[line],pre_R[v[k].column],nF))*(-pre_L[line][feature])));
-                }
+            for(int i=0; i < nU; i++){
+                if(A[i][v[num_zero].column] != 0)
+                    //sum_R += (2*((A[i][v[k].column]-internal_product(pre_L[i],pre_R[v[k].column],nF))*(-pre_L[i][k])));
+                    sum_R += (2*((A[i][v[num_zero].column]-pre_B[i][v[num_zero].column])*(-pre_L[i][k])));
+
             }
             L[v[num_zero].row][k] = pre_L[v[num_zero].row][k] - alpha*sum_L;
             //R[feature][v[k].column] = pre_R[feature][v[k].column] - alpha*sum_R;
             R[v[num_zero].column][k] = pre_R[v[num_zero].column][k] - alpha*sum_R; //add
         }
-    } 
+    } */
+
+    zero_LR(L, R, nU, nI, nF);
+
+    for (z = 0; z < num_zeros; z++){
+        i = v[z].row;
+        j = v[z].column;
+        a = v[z].A;
+        b = v[z].B;
+
+        for(int k = 0; k < nF; k++){
+            L[i][k] += (a-b)*(pre_R[j][k]);
+            R[j][k] += (a-b)*(pre_L[i][k]);
+        }
+    }
+
+    for(int u = 0; u < nU; u++)
+        for(int f = 0; f < nF; f++)
+            L[u][f] = pre_L[u][f] + alpha*2*L[u][f];
+
+
+    for(int i = 0; i < nI; i++)
+        for(int f = 0; f < nF; f++)
+            R[i][f] = pre_R[i][f] + alpha*2*R[i][f]; 
 
 }
 
@@ -264,7 +287,7 @@ void copy_matrix(double** original, double** copied,int rows, int columns){
 }
 
 void create_output(double** B,int rows, int columns,char* filename,double** A){
-    
+    FILE* fp = fopen("recsystem.out", "w");
     //int size = strlen(filename);
     //printf("%d",size); 
 
@@ -279,7 +302,8 @@ void create_output(double** B,int rows, int columns,char* filename,double** A){
                 }
             }
         }
-    
-        printf("%d\n",item);
+
+        fprintf(fp,"%d\n",item);
     }
+    fclose(fp);
 }
