@@ -116,13 +116,13 @@ void random_fill_LR(double** L_, double** R_, int nU, int nI, int nF)
 *            rows - number of rows of matrix
 *            columns - number of columns of matrix
 *            
-* Returns: pointer to pointer of matrix
+* Returns: double pointer to transposed matrix
 *										
-* Side-Effects: if any allocation fails exits with exit(1)
-*               memory of input matrix is freed
+* Side-Effects: 
+*              
 *
-* Description: allocates memory for a matrix [columns x rows] and copies matrix[i][j]
-*              values to the allocated matrix result[j]
+* Description: transposes matrix
+*              
 *****************************************************************************/
 
 double** transpose(double** matrix, int rows, int columns)
@@ -136,49 +136,24 @@ double** transpose(double** matrix, int rows, int columns)
     return result;
 }
 
-
 /******************************************************************************
 * matrix_mul()
 *
 * Arguments: firstMatrix - passing by reference pointer to pointer of matrix 
 *            secondMatrix - passing by reference pointer to pointer of matrix 
-*            matrix3 - passing by reference pointer to pointer of matrix 
-*            nU - number of users          
-*            nI - number of items
+*            v - vector which has elements of B that are non-zero
 *            nF - number of features
 *
 * Returns: void
 *										
 * Side-Effects: 
 *
-* Description: multiple two matrix and give the result to the pointer matrix3
+* Description: calculates one element of matrix B by multiplying a row of firstmatrix and 
+*              a column of secondmatrix
 *
 *****************************************************************************/
 
 void matrix_mul(double **firstMatrix, double **secondMatrix, non_zero* v, int num_zeros ,int nF){
-    // result[n1][n3] = firstMatrix[n1][n2] x secondMatrix[n3][n2] (transposed)
-    //int n1 = nU; // sizeof(matrix_1)/sizeof(matrix_1[0]);
-    //int n2 = nF; // sizeof(matrix_1[0])/sizeof(matrix_1[0][0]);
-    //int n3 = nI; //sizeof(matrix_2[0])/sizeof(matrix_2[0][0]);
-    //double tmp;
-    
-/*    for(int i = 0; i < n1; i++)
-		for(int j = 0; j < n3; j++)
-            {
-                tmp = 0;
-			    for(int k = 0; k < n2; k++)    
-                    tmp += firstMatrix[i][k] * secondMatrix[k][j];         
-				    result[i][j] = tmp;
-            } */
-    /*
-    for(int i = 0; i < n1; i++)
-		for(int j = 0; j < n3; j++)
-            {
-                tmp = 0;
-			    for(int k = 0; k < n2; k++)
-                    tmp += firstMatrix[i][k] * secondMatrix[j][k];       
-				    result[i][j] = tmp;
-            }*/
     
     for (int z = 0; z < num_zeros; z++){
         int i = v[z].row;
@@ -190,6 +165,23 @@ void matrix_mul(double **firstMatrix, double **secondMatrix, non_zero* v, int nu
 
 }
 
+/******************************************************************************
+* zero_LR()
+*
+* Arguments: L - matrix L 
+*            R - matrix R
+*            nU - number of users          
+*            nI - number of items
+*            nF - number of features
+*
+* Returns: void
+*										
+* Side-Effects: 
+*
+* Description: puts elements of matrices L and R as 0
+*
+*****************************************************************************/
+
 void zero_LR(double** L, double** R, int nU, int nI, int nF){
     int u,i,f;
     //#pragma omp parallel for private(f)
@@ -197,14 +189,11 @@ void zero_LR(double** L, double** R, int nU, int nI, int nF){
         for(f = 0; f < nF; f++)
             L[u][f] = 0;
 
-
     //#pragma omp parallel for private(f)
     for(i = 0; i < nI; i++)
         for(f = 0; f < nF; f++)
             R[i][f] = 0;
-
 }
-
 
 /******************************************************************************
 * recalculate_Matrix()
@@ -213,56 +202,27 @@ void zero_LR(double** L, double** R, int nU, int nI, int nF){
 *            R - passing by reference pointer to pointer of matrix R
 *            pre_L - passing by reference pointer to pointer of matrix pre_L
 *            pre_R - passing by reference pointer to pointer of matrix pre_R
-*            A - passing by reference pointer to pointer of matrix A
-*            B - passing by reference pointer to pointer of matrix B
-*            pre_B - passing by reference pointer to pointer of matrix pre_B
 *            nU - number of users          
 *            nI - number of items
 *            nF - number of features
 *            iter - maximum number of iterations
 *            alpha - converge rate
-*            v - array of type _non_zero with all information about non zero values in matrix A
-*            non_zer0 - number of non zero values in matrix A
+*            v - array of type _non_zero with all information about non zero values in matrix A and B
+*            num_zeros - number of non zero values in matrix A
 *
 * Returns: void
 *										
 * Side-Effects: 
 *
-* Description: computes the algorithm( minimizing the difference between A and B)
+* Description: computes the algorithm (minimizing the difference between A and B)
 *
 *****************************************************************************/
 
 void recalculate_Matrix(double** L, double** R, double** pre_L, double** pre_R, int nU, int nI, int nF, double alpha, non_zero *v, int num_zeros){
     int i, j, z;
     double a, b;
-/*
-    for(int num_zero = 0 ; num_zero < non_zero ;num_zero++){   
-        //printf(" linha: %d  juna : %d\n",v[k].row,v[k].column);
-        for(int k = 0; k < nF; k ++){
-            double sum_L = 0;
-            double sum_R = 0;
-            for(int j = 0; j < nI; j++){    
-                if(A[v[num_zero].row][j] != 0)
-                    //sum_L += (2*((A[v[k].row][j]-pre_B[v[k].row][j])*(-pre_R[feature][j])));
-                    //sum_L += (20*((A[v[k].row][j]-internal_product(pre_L[v[k].row],pre_R[j],nF))*(-pre_R[j][k])));
-                    // alterar o *2 para o final
-                    sum_L += (2*((A[v[num_zero].row][j]-pre_B[v[num_zero].row][j])*(-pre_R[j][k]))); 
-                    
-            }                                  
-            for(int i=0; i < nU; i++){
-                if(A[i][v[num_zero].column] != 0)
-                    //sum_R += (2*((A[i][v[k].column]-internal_product(pre_L[i],pre_R[v[k].column],nF))*(-pre_L[i][k])));
-                    sum_R += (2*((A[i][v[num_zero].column]-pre_B[i][v[num_zero].column])*(-pre_L[i][k])));
-
-            }
-            L[v[num_zero].row][k] = pre_L[v[num_zero].row][k] - alpha*sum_L;
-            //R[feature][v[k].column] = pre_R[feature][v[k].column] - alpha*sum_R;
-            R[v[num_zero].column][k] = pre_R[v[num_zero].column][k] - alpha*sum_R; //add
-        }
-    } */
 
     zero_LR(L, R, nU, nI, nF);
-
     
     for (z = 0; z < num_zeros; z++){
         i = v[z].row;
@@ -287,13 +247,21 @@ void recalculate_Matrix(double** L, double** R, double** pre_L, double** pre_R, 
 
 }
 
-void copy_matrix(double** original, double** copied,int rows, int columns){
-    for(int i= 0; i<rows;i++){
-        for(int j=0;j<columns;j++){
-            copied[i][j]=original[i][j];
-        }
-    }
-}
+/******************************************************************************
+* create_output()
+*
+* Arguments: B - final matrix B
+*            A - matrix A
+*            rows - number of rows of matrix B
+*            columns - number of columns of matrix B
+*
+* Returns: void
+*										
+* Side-Effects: 
+*
+* Description: creates output file with recommendations
+*
+*****************************************************************************/
 
 void create_output(double** B,int rows, int columns,char* filename,double** A){
     FILE* fp = fopen("recsystem.out", "w");
