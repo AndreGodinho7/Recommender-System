@@ -68,8 +68,10 @@ int main(int argc, char* argv[])
 
     B = MatrixInit(init->nU, init->nI);
     
-    for (int i = 0; i < init->num_zeros; i++)
-        B[init->v[i].row][init->v[i].column] = init->v[i].B;
+    for (int i = 0; i < init->nU; i++)
+        for (int j = 0; j < init->nI; j++)
+            for (int k = 0; k < init->nF ; k++)
+                B[i][j] += L1[i][k] * R1[j][k];
 
     create_output(B, init->nU, init->nI, argv[1],A);
 
