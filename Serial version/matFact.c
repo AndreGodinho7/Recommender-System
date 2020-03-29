@@ -28,7 +28,8 @@ int main(int argc, char* argv[])
     };
 
     init = read_input(argv[1]);
-
+    A = init->matrix;
+    
     L = MatrixInit(init->nU, init->nF);
     R = MatrixInit(init->nF, init->nI);
     L_hold = MatrixInit(init->nU, init->nF); // Matrix that stores the previous iteration of L
@@ -49,9 +50,6 @@ int main(int argc, char* argv[])
     /*Do all iterations */
     for(int i = 0 ; i < init->iter ; i++){
         /*update the matrix*/
-        // copy_matrix(R1,R2,init->nI,init->nF); 
-        // copy_matrix(L1,L2,init->nU,init->nF);
-        // mexer com ponteiros auxiliares é mais eficiente
         tmp = L1;
         L1 = L2;
         L2 = tmp;
@@ -66,16 +64,8 @@ int main(int argc, char* argv[])
 
     B = MatrixInit(init->nU, init->nI);
     
-    for(int i = 0; i < init->nU; i++)
-		for(int j = 0; j < init->nI; j++)
-            {
-                double tmp = 0;
-			    for(int k = 0; k < init->nF; k++)
-                    tmp += L1[i][k] * R1[j][k];       
-				    B[i][j] = tmp;
-            }
-
-    A = init->matrix;
+    for (int i = 0; i < init->num_zeros; i++)
+        B[init->v[i].row][init->v[i].column] = init->v[i].B;
 
     create_output(B, init->nU, init->nI, argv[1],A);
 
