@@ -54,9 +54,6 @@ int main(int argc, char* argv[])
     
     for(int i = 0 ; i < init->iter ; i++){
         /*update the matrix*/
-        // copy_matrix(R1,R2,init->nI,init->nF); 
-        // copy_matrix(L1,L2,init->nU,init->nF);
-        // mexer com ponteiros auxiliares é mais eficiente
         tmp = L1;
         L1 = L2;
         L2 = tmp;
