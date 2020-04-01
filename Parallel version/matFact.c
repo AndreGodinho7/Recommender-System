@@ -10,8 +10,9 @@ int main(int argc, char* argv[])
 {   
 
     //omp_set_num_threads(4);
-    clock_t begin = clock();
+    double begin = omp_get_wtime(); 
     input_values* init;
+    double sum;
     
     // for allocating matrices
     double** L, **R;
@@ -37,47 +38,62 @@ int main(int argc, char* argv[])
     R = MatrixInit(init->nF, init->nI);
     L_hold = MatrixInit(init->nU, init->nF); // Matrix that stores the previous iteration of L
     R_hold = MatrixInit(init->nF, init->nI); // Matrix that stores the previous iteration of R
-
-    random_fill_LR(L, R, init->nU, init->nI, init->nF);
-
-    L1 = L;
-    L2 = L_hold;
-
-    R = transpose(R, init->nF, init->nI); 
-    R_hold = transpose(R_hold, init->nF, init->nI); 
-    R1 = R;
-    R2 = R_hold;
-
-    matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
     
-    /*Do all iterations */
-    
-    for(int i = 0 ; i < init->iter ; i++){
-        /*update the matrix*/
-        tmp = L1;
-        L1 = L2;
-        L2 = tmp;
+    #pragma omp parallel
+    {
+        #pragma omp single
+        {
+            random_fill_LR(L, R, init->nU, init->nI, init->nF);
+        }
+        
+        #pragma omp single
+        {
+            L1 = L;
+            L2 = L_hold;
+        }
 
-        tmp = R1;
-        R1 = R2;
-        R2 = tmp; 
+        R = transpose(R, init->nF, init->nI); 
+        R_hold = transpose(R_hold, init->nF, init->nI); 
 
-        recalculate_Matrix(L1, R1, L2, R2, init->nU, init->nI, init->nF, init->alpha,init->v ,init->num_zeros);
+        #pragma omp single
+        {
+            R1 = R;
+            R2 = R_hold;
+        }
+
         matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
+
+        for(int i = 0 ; i < init->iter ; i++){
+            /*update the matrix*/
+            // printf("Iteration = %d\n", i);
+            // if (i == 10) exit(0);
+            #pragma omp single
+            {
+                tmp = L1;
+                L1 = L2;
+                L2 = tmp;
+
+                tmp = R1;
+                R1 = R2;
+                R2 = tmp; 
+            }
+            recalculate_Matrix(L1, R1, L2, R2, init->nU, init->nI, init->nF, init->alpha,init->v ,init->num_zeros);
+            matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
+        }
+
+        B = MatrixInit(init->nU, init->nI);
+        
+        #pragma omp parallel for
+        for (int i = 0; i < init->nU; i++)
+            for (int j = 0; j < init->nI; j++)
+                for (int k = 0; k < init->nF ; k++)
+                    B[i][j] += L1[i][k] * R1[j][k];
+
+        create_output(B, init->nU, init->nI, argv[1],A);
     }
-
-    B = MatrixInit(init->nU, init->nI);
     
-    for (int i = 0; i < init->nU; i++)
-        for (int j = 0; j < init->nI; j++)
-            for (int k = 0; k < init->nF ; k++)
-                B[i][j] += L1[i][k] * R1[j][k];
-
-    create_output(B, init->nU, init->nI, argv[1],A);
-
-    clock_t end = clock();
-    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    double end = omp_get_wtime();
+    double time_spent = end - begin;
     printf("Execution time: %lf seconds\n", time_spent);
-
     return 0;
 }

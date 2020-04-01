@@ -99,13 +99,14 @@ double drand ( double low, double high )
 *****************************************************************************/
 void random_fill_LR(double** L_, double** R_, int nU, int nI, int nF)
 {   
-    srandom(0);
-    for(int i = 0; i < nU; i++)
-        for(int j = 0; j < nF; j++)
+    int i, j;
+        
+    for(i = 0; i < nU; i++)
+        for(j = 0; j < nF; j++)
             L_[i][j] = RAND01 / (double) nF;
-
-    for(int i = 0; i < nF; i++)
-        for(int j = 0; j < nI; j++)
+    
+    for(i = 0; i < nF; i++)
+        for(j = 0; j < nI; j++)
             R_[i][j] = RAND01 / (double) nF;
 }
 
@@ -126,10 +127,10 @@ void random_fill_LR(double** L_, double** R_, int nU, int nI, int nF)
 *****************************************************************************/
 
 double** transpose(double** matrix, int rows, int columns)
-{   
+{
     double** result = MatrixInit(columns, rows);
     int i,j;
-    #pragma omp parallel for private(j)
+    #pragma omp parallel for private(i,j)
     for (i = 0; i < rows; ++i)
         for (j = 0; j < columns; ++j)
             result[j][i] = matrix[i][j];
@@ -154,15 +155,19 @@ double** transpose(double** matrix, int rows, int columns)
 *****************************************************************************/
 
 void matrix_mul(double **firstMatrix, double **secondMatrix, non_zero* v, int num_zeros ,int nF){
-    
-    for (int z = 0; z < num_zeros; z++){
-        int i = v[z].row;
-        int j = v[z].column;
-        v[z].B = 0;
-        for (int k = 0; k < nF; k++)
-            v[z].B += firstMatrix[i][k]*secondMatrix[j][k];
-    }
+    int z, k, i, j;
+    double sum = 0;
 
+    // dúvida: inner for k não é dividido entre threads
+    #pragma omp for private(z,k,i,j) 
+    for (z = 0; z < num_zeros; z++){
+        i = v[z].row;
+        j = v[z].column;
+        sum = 0;
+        for (k = 0; k < nF; k++)
+            sum += firstMatrix[i][k]*secondMatrix[j][k];
+        v[z].B = sum;
+    }
 }
 
 /******************************************************************************
@@ -181,15 +186,15 @@ void matrix_mul(double **firstMatrix, double **secondMatrix, non_zero* v, int nu
 * Description: puts elements of matrices L and R as 0
 *
 *****************************************************************************/
-
 void zero_LR(double** L, double** R, int nU, int nI, int nF){
     int u,i,f;
-    //#pragma omp parallel for private(f)
+    
+    #pragma omp for private(f) nowait
     for(u = 0; u < nU; u++)
         for(f = 0; f < nF; f++)
             L[u][f] = 0;
 
-    //#pragma omp parallel for private(f)
+    #pragma omp for private(f) 
     for(i = 0; i < nI; i++)
         for(f = 0; f < nF; f++)
             R[i][f] = 0;
@@ -219,32 +224,37 @@ void zero_LR(double** L, double** R, int nU, int nI, int nF){
 *****************************************************************************/
 
 void recalculate_Matrix(double** L, double** R, double** pre_L, double** pre_R, int nU, int nI, int nF, double alpha, non_zero *v, int num_zeros){
-    int i, j, z;
+    int i, j, z, f, k;
     double a, b;
 
     zero_LR(L, R, nU, nI, nF);
     
+    // for (z = 0; z < num_zeros; z++)
+    //     printf("%lf ", v[z].B);
+
+    #pragma omp for private(z,a,b,i,j,k)
     for (z = 0; z < num_zeros; z++){
-        i = v[z].row;
-        j = v[z].column;
-        a = v[z].A;
-        b = v[z].B;
-        //REDUCTION HERE MAYBE
-        for(int k = 0; k < nF; k++){
+            i = v[z].row;
+            j = v[z].column;
+            a = v[z].A;
+            b = v[z].B;
+        for(k = 0; k < nF; k++){
+           #pragma omp atomic
             L[i][k] += (a-b)*(pre_R[j][k]);
+           #pragma omp atomic
             R[j][k] += (a-b)*(pre_L[i][k]);
         }
     }
     
+    #pragma omp for private(f) nowait
     for(int u = 0; u < nU; u++)
-        for(int f = 0; f < nF; f++)
+        for(f = 0; f < nF; f++)
             L[u][f] = pre_L[u][f] + alpha*2*L[u][f];
 
-    
+    #pragma omp for private(f) 
     for(int i = 0; i < nI; i++)
-        for(int f = 0; f < nF; f++)
+        for(f = 0; f < nF; f++)
             R[i][f] = pre_R[i][f] + alpha*2*R[i][f]; 
-
 }
 
 /******************************************************************************
@@ -268,7 +278,7 @@ void create_output(double** B,int rows, int columns,char* filename,double** A){
     //int size = strlen(filename);
     //printf("%d",size); 
     int i;
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for(i = 0 ; i < rows ;i++){
         double max=0;
         int item;
