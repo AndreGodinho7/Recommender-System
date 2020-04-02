@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
     R = MatrixInit(init->nF, init->nI);
     L_hold = MatrixInit(init->nU, init->nF); // Matrix that stores the previous iteration of L
     R_hold = MatrixInit(init->nF, init->nI); // Matrix that stores the previous iteration of R
-
+    printf("Dei alloc a tudo im good\n");
     random_fill_LR(L, R, init->nU, init->nI, init->nF);
 
     L1 = L;
