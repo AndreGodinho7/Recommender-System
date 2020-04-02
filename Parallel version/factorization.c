@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include<omp.h>
+#include<float.h>
 #include "input.h"
 #define RAND01 ((double) random() / (double) RAND_MAX)
 
@@ -269,25 +270,35 @@ void recalculate_Matrix(double** L, double** R, double** pre_L, double** pre_R, 
 *
 *****************************************************************************/
 
-void create_output(double** B,int rows, int columns,char* filename,double** A){
+void create_output(non_zero *v, int nU, int nI, int nF,char* filename, double** L, double** R){
     FILE* fp = fopen("matFact-omp.out", "w");
     //int size = strlen(filename);
     //printf("%d",size); 
-    int i;
+    int i,j,k;
+    int z = 0;
+    double element;
+    int position;
+
     //#pragma omp parallel for
-    for(i = 0 ; i < rows ;i++){
-        double max=0;
-        int item;
-        for(int j=0;j<columns;j++){
-            if(A[i][j]==0.00){
-                if(B[i][j]>max){
-                    max=B[i][j];
-                    item=j;
-                }
+    for(i = 0 ; i < nU ;i++){
+        double max = -DBL_MAX;
+        position = -1;
+
+        for(j = 0 ; j < nI ;j++){
+            if(v[z].row == i && v[z].column == j){
+                z++;
+                continue;
+            }
+
+            element = 0;
+            for (k = 0; k < nF; k++)
+                element += L[i][k] * R[j][k];
+            if (element > max){
+                max = element;
+                position = j;
             }
         }
-
-        fprintf(fp,"%d\n",item);
+        fprintf(fp,"%d\n",position);
     }
     fclose(fp);
 }

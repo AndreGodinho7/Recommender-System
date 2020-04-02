@@ -4,6 +4,7 @@
 #include"input.h"
 #include "factorization.h"
 #include <time.h>
+#include <limits.h>
 #include<omp.h>
 
 int main(int argc, char* argv[])
@@ -23,8 +24,8 @@ int main(int argc, char* argv[])
     double** R1, **R2; 
     double** tmp;
 
-    double **A;
-    double **B;
+    // double **A;
+    // double **B;
     int i,j,k;
 
     if (argc != 2){
@@ -33,8 +34,8 @@ int main(int argc, char* argv[])
     };
 
     init = read_input(argv[1]);
-    A = init->matrix;
-    B = MatrixInit(init->nU, init->nI);
+    // A = init->matrix;
+    // B = MatrixInit(init->nU, init->nI);
     L = MatrixInit(init->nU, init->nF);
     R = MatrixInit(init->nF, init->nI);
     L_hold = MatrixInit(init->nU, init->nF); // Matrix that stores the previous iteration of L
@@ -82,26 +83,26 @@ int main(int argc, char* argv[])
             matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
         }
         
-        #pragma omp for private(i,j,k)
-        for (i = 0; i < init->nU; i++)
-            for (j = 0; j < init->nI; j++)
-                for (k = 0; k < init->nF ; k++)
-                    B[i][j] += L1[i][k] * R1[j][k];
+        // #pragma omp for private(i,j,k)
+        // for (i = 0; i < init->nU; i++)
+        //     for (j = 0; j < init->nI; j++)
+        //         for (k = 0; k < init->nF ; k++)
+        //             B[i][j] += L1[i][k] * R1[j][k];
 
-        create_output(B, init->nU, init->nI, argv[1],A);
     }
+    create_output(init->v, init->nU, init->nI, init->nF, argv[1], L1, R1);
     
     for (int i = 0; i < init->nU; i++)
     {
-        free(A[i]);
-        free(B[i]);
+        // free(A[i]);
+        // free(B[i]);
         free(L1[i]);
         free(L2[i]);
     }
     free(L1);
     free(L2);
-    free(A);
-    free(B);
+    // free(A);
+    // free(B);
 
     for (int i = 0; i < init->nI; i++)
     {
