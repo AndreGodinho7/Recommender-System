@@ -297,5 +297,8 @@ void create_output(non_zero *v, int nU, int nI, int nF,char* filename, double** 
         }
         fprintf(fp,"%d\n",position);
     }
+    /*for(int k = 0 ; k < rows ;k++){
+        fprintf(fp,"%d\n",best[k]);
+    }*/
     fclose(fp);
 }
