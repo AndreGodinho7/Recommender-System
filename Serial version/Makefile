@@ -6,7 +6,7 @@ CC = gcc
 CFLAGS  = -g -Wall
 
 OBJS = matFact.o input.o factorization.o
-EXEC = recsystem
+EXEC = matFact
 
 $(EXEC): $(OBJS)
 	$(CC) $(CFFLAGS) -o $(EXEC) $(OBJS)

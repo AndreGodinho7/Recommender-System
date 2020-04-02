@@ -158,7 +158,6 @@ void matrix_mul(double **firstMatrix, double **secondMatrix, non_zero* v, int nu
     int z, k, i, j;
     double sum = 0;
 
-    // dúvida: inner for k não é dividido entre threads
     #pragma omp for private(z,k,i,j) 
     for (z = 0; z < num_zeros; z++){
         i = v[z].row;
@@ -229,9 +228,6 @@ void recalculate_Matrix(double** L, double** R, double** pre_L, double** pre_R, 
 
     zero_LR(L, R, nU, nI, nF);
     
-    // for (z = 0; z < num_zeros; z++)
-    //     printf("%lf ", v[z].B);
-
     #pragma omp for private(z,a,b,i,j,k)
     for (z = 0; z < num_zeros; z++){
             i = v[z].row;
@@ -274,7 +270,7 @@ void recalculate_Matrix(double** L, double** R, double** pre_L, double** pre_R, 
 *****************************************************************************/
 
 void create_output(double** B,int rows, int columns,char* filename,double** A){
-    FILE* fp = fopen("recsystem.out", "w");
+    FILE* fp = fopen("matFact-omp.out", "w");
     //int size = strlen(filename);
     //printf("%d",size); 
     int i;

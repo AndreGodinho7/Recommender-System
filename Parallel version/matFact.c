@@ -25,6 +25,7 @@ int main(int argc, char* argv[])
 
     double **A;
     double **B;
+    int i,j,k;
 
     if (argc != 2){
         printf("ERROR: inserted more than 1 input file.\n");
@@ -33,7 +34,7 @@ int main(int argc, char* argv[])
 
     init = read_input(argv[1]);
     A = init->matrix;
-
+    B = MatrixInit(init->nU, init->nI);
     L = MatrixInit(init->nU, init->nF);
     R = MatrixInit(init->nF, init->nI);
     L_hold = MatrixInit(init->nU, init->nF); // Matrix that stores the previous iteration of L
@@ -80,18 +81,39 @@ int main(int argc, char* argv[])
             recalculate_Matrix(L1, R1, L2, R2, init->nU, init->nI, init->nF, init->alpha,init->v ,init->num_zeros);
             matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
         }
-
-        B = MatrixInit(init->nU, init->nI);
         
-        #pragma omp parallel for
-        for (int i = 0; i < init->nU; i++)
-            for (int j = 0; j < init->nI; j++)
-                for (int k = 0; k < init->nF ; k++)
+        #pragma omp for private(i,j,k)
+        for (i = 0; i < init->nU; i++)
+            for (j = 0; j < init->nI; j++)
+                for (k = 0; k < init->nF ; k++)
                     B[i][j] += L1[i][k] * R1[j][k];
 
         create_output(B, init->nU, init->nI, argv[1],A);
     }
     
+    for (int i = 0; i < init->nU; i++)
+    {
+        free(A[i]);
+        free(B[i]);
+        free(L1[i]);
+        free(L2[i]);
+    }
+    free(L1);
+    free(L2);
+    free(A);
+    free(B);
+
+    for (int i = 0; i < init->nI; i++)
+    {
+        free(R1[i]);
+        free(R2[i]);
+    }
+
+    free(R1);
+    free(R2);
+
+    free(init);
+
     double end = omp_get_wtime();
     double time_spent = end - begin;
     printf("Execution time: %lf seconds\n", time_spent);

@@ -259,7 +259,7 @@ void recalculate_Matrix(double** L, double** R, double** pre_L, double** pre_R, 
 *****************************************************************************/
 
 void create_output(double** B,int rows, int columns,char* filename,double** A){
-    FILE* fp = fopen("recsystem.out", "w");
+    FILE* fp = fopen("matFact.out", "w");
     //int size = strlen(filename);
     //printf("%d",size); 
 

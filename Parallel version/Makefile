@@ -6,7 +6,7 @@ CC = gcc
 CFLAGS  = -fopenmp 
 
 OBJS = matFact.o input.o factorization.o
-EXEC = recsystem
+EXEC = matFact-omp
 
 $(EXEC): $(OBJS)
 	$(CC) -fopenmp -o $(EXEC) $(OBJS)
