@@ -18,6 +18,8 @@ void recalculate_Matrix(double** L, double** R,double** pre_L, double** pre_R, i
 
 void copy_matrix(double** original, double** copied,int rows, int columns);
 
-void create_output(double** B,int rows, int columns,char* filename,double** A);
+// void create_output(non_zero *v, int nU, int nI, int nF,char* filename, double** L, double** R, int num_zeros);
+void create_output(double** B,int rows, int columns,char* filename,double **A);
+
 
 #endif
