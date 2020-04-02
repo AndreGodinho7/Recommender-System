@@ -10,7 +10,6 @@
 int main(int argc, char* argv[])
 {   
 
-    //omp_set_num_threads(4);
     double begin = omp_get_wtime(); 
     input_values* init;
     double sum;
@@ -67,8 +66,6 @@ int main(int argc, char* argv[])
 
         for(int i = 0 ; i < init->iter ; i++){
             /*update the matrix*/
-            // printf("Iteration = %d\n", i);
-            // if (i == 10) exit(0);
             #pragma omp single
             {
                 tmp = L1;
@@ -83,26 +80,16 @@ int main(int argc, char* argv[])
             matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
         }
         
-        // #pragma omp for private(i,j,k)
-        // for (i = 0; i < init->nU; i++)
-        //     for (j = 0; j < init->nI; j++)
-        //         for (k = 0; k < init->nF ; k++)
-        //             B[i][j] += L1[i][k] * R1[j][k];
-
     }
-    create_output(init->v, init->nU, init->nI, init->nF, argv[1], L1, R1);
+    create_output(init->v, init->nU, init->nI, init->nF, argv[1], L1, R1, init->num_zeros);
     
     for (int i = 0; i < init->nU; i++)
     {
-        // free(A[i]);
-        // free(B[i]);
         free(L1[i]);
         free(L2[i]);
     }
     free(L1);
     free(L2);
-    // free(A);
-    // free(B);
 
     for (int i = 0; i < init->nI; i++)
     {
