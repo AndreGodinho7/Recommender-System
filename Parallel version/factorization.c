@@ -270,24 +270,29 @@ void recalculate_Matrix(double** L, double** R, double** pre_L, double** pre_R, 
 *****************************************************************************/
 
 void create_output(double** B,int rows, int columns,char* filename,double** A){
-    FILE* fp = fopen("matFact-omp.out", "w");
-    //int size = strlen(filename);
-    //printf("%d",size); 
-    int i;
-    //#pragma omp parallel for
+    FILE* fp = fopen("recsystem.out", "w");
+    //int* best; 
+    //best = (int *)malloc(rows*sizeof(int));  
+    int j,i;
+    double max;
+    int item;
+    #pragma omp for private(i,j,max,item) ordered
     for(i = 0 ; i < rows ;i++){
-        double max=0;
-        int item;
-        for(int j=0;j<columns;j++){
+        max=0.0;
+        for(j=0;j<columns;j++){
             if(A[i][j]==0.00){
                 if(B[i][j]>max){
                     max=B[i][j];
                     item=j;
+                    //best[i]=j;
                 }
             }
         }
-
         fprintf(fp,"%d\n",item);
     }
+    /*for(int k = 0 ; k < rows ;k++){
+        fprintf(fp,"%d\n",best[k]);
+    }*/
     fclose(fp);
+    //free(best);
 }
