@@ -65,7 +65,6 @@ int main(int argc, char* argv[])
         matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
 
         for(int i = 0 ; i < init->iter ; i++){
-            /*update the matrix*/
             #pragma omp single
             {
                 tmp = L1;

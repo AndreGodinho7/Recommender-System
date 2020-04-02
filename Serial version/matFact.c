@@ -19,16 +19,12 @@ int main(int argc, char* argv[])
     double** R1, **R2; 
     double** tmp;
 
-    double** A, **B;
-
     if (argc != 2){
         printf("ERROR: inserted more than 1 input file.\n");
         exit(0);
     };
 
     init = read_input(argv[1]);
-    A = init->matrix;
-    B = MatrixInit(init->nU, init->nI);
     L = MatrixInit(init->nU, init->nF);
     R = MatrixInit(init->nF, init->nI);
     L_hold = MatrixInit(init->nU, init->nF); // Matrix that stores the previous iteration of L
@@ -59,13 +55,8 @@ int main(int argc, char* argv[])
         matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
     }
 
-    for (int i = 0; i < init->nU; i++)
-        for (int j = 0; j < init->nI; j++)
-            for (int k = 0; k < init->nF ; k++)
-                B[i][j] += L1[i][k] * R1[j][k];
+    create_output(init->v, init->nU, init->nI, init->nF, argv[1], L1, R1, init->num_zeros);
 
-
-    create_output(B, init->nU, init->nI, argv[1],A);
     for (int i = 0; i < init->nU; i++)
     {
         free(L1[i]);

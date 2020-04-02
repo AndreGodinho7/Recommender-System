@@ -259,24 +259,21 @@ void recalculate_Matrix(double** L, double** R, double** pre_L, double** pre_R, 
 *
 *****************************************************************************/
 
-void create_output(non_zero *v, int nU, int nI, int nF,char* filename, double** L, double** R){
+void create_output(non_zero *v, int nU, int nI, int nF,char* filename, double** L, double** R, int num_zeros){
     FILE* fp = fopen("matFact.out", "w");
-    //int size = strlen(filename);
-    //printf("%d",size); 
     int i,j,k;
     int z = 0;
     double element;
     int position;
 
-    //#pragma omp parallel for
     for(i = 0 ; i < nU ;i++){
         double max = -DBL_MAX;
         element = 0;
         position = -1;
 
         for(j = 0 ; j < nI ;j++){
-            if(v[z].row == i && v[z].column == j){
-                k++;
+            if(v[z].row == i && v[z].column == j && z < num_zeros){
+                z++;
                 continue;
             }
 
