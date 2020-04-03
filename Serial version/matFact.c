@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
     }
     free(L1);
     free(L2);
-
+    
     for (int i = 0; i < init->nI; i++)
     {
         free(R1[i]);
