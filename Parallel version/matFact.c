@@ -3,16 +3,16 @@
 
 #include"input.h"
 #include "factorization.h"
-#include <time.h>
 #include <limits.h>
 #include<omp.h>
 
 int main(int argc, char* argv[])
 {   
 
-    double begin = omp_get_wtime(); 
+
     input_values* init;
     double sum;
+    
     
     // for allocating matrices
     double** L, **R;
@@ -23,8 +23,7 @@ int main(int argc, char* argv[])
     double** R1, **R2; 
     double** tmp;
 
-    // double **A;
-    // double **B;
+
     int i,j,k;
 
     if (argc != 2){
@@ -33,35 +32,29 @@ int main(int argc, char* argv[])
     };
 
     init = read_input(argv[1]);
-    // A = init->matrix;
-    // B = MatrixInit(init->nU, init->nI);
+
     L = MatrixInit(init->nU, init->nF);
     R = MatrixInit(init->nF, init->nI);
     L_hold = MatrixInit(init->nU, init->nF); // Matrix that stores the previous iteration of L
     R_hold = MatrixInit(init->nF, init->nI); // Matrix that stores the previous iteration of R
     
+
+
+    random_fill_LR(L, R, init->nU, init->nI, init->nF);
+        
+
+    L1 = L;
+    L2 = L_hold;
+        
+
+    R = transpose(R, init->nF, init->nI); 
+    R_hold = transpose(R_hold, init->nF, init->nI); 
+
+    R1 = R;
+    R2 = R_hold;
+        
     #pragma omp parallel
     {
-        #pragma omp single
-        {
-            random_fill_LR(L, R, init->nU, init->nI, init->nF);
-        }
-        
-        #pragma omp single
-        {
-            L1 = L;
-            L2 = L_hold;
-        }
-
-        R = transpose(R, init->nF, init->nI); 
-        R_hold = transpose(R_hold, init->nF, init->nI); 
-
-        #pragma omp single
-        {
-            R1 = R;
-            R2 = R_hold;
-        }
-
         matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
 
         for(int i = 0 ; i < init->iter ; i++){
@@ -80,7 +73,7 @@ int main(int argc, char* argv[])
         }
         
     }
-    create_output(init->v, init->nU, init->nI, init->nF, argv[1], L1, R1, init->num_zeros);
+    create_output(init->v, init->nU, init->nI, init->nF, L1, R1, init->num_zeros);
     
     for (int i = 0; i < init->nU; i++)
     {
@@ -95,14 +88,15 @@ int main(int argc, char* argv[])
         free(R1[i]);
         free(R2[i]);
     }
-
+   
+    free(init->v);
+     
+    
     free(R1);
     free(R2);
 
     free(init);
 
-    double end = omp_get_wtime();
-    double time_spent = end - begin;
-    printf("Execution time: %lf seconds\n", time_spent);
+
     return 0;
 }

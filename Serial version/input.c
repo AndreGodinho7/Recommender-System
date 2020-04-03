@@ -57,6 +57,6 @@ input_values* read_input(char* filename)
         
         i++;
     }
-
+    fclose(fpIn);
     return init;
 }

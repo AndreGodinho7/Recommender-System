@@ -62,24 +62,6 @@ double** MatrixInit(int rows, int columns)
     return matrix;
 }
 
-/******************************************************************************
-* drand()
-*
-* Arguments: low - lower boundary
-*            high - upper boundary         
-*
-* Returns: double
-*										
-* Side-Effects: 
-*
-* Description: generates a random number between the two boundaries
-*
-*****************************************************************************/
-
-double drand ( double low, double high )
-{
-    return ( (double)rand() * ( high - low ) ) / (double)RAND_MAX + low;
-}
 
 /******************************************************************************
 * random_fill_LR()
@@ -131,6 +113,14 @@ double** transpose(double** matrix, int rows, int columns)
     for (int i = 0; i < rows; ++i)
         for (int j = 0; j < columns; ++j)
             result[j][i] = matrix[i][j];
+
+    for (int k = 0; k < rows; k++)
+    {
+        free(matrix[k]);
+        
+    }
+    free(matrix);
+
     return result;
 }
 
@@ -259,8 +249,8 @@ void recalculate_Matrix(double** L, double** R, double** pre_L, double** pre_R, 
 *
 *****************************************************************************/
 
-void create_output(non_zero *v, int nU, int nI, int nF,char* filename, double** L, double** R, int num_zeros){
-    FILE* fp = fopen("matFact.out", "w");
+void create_output(non_zero *v, int nU, int nI, int nF, double** L, double** R, int num_zeros){
+    
     int i,j,k;
     int z = 0;
     double element;
@@ -286,7 +276,7 @@ void create_output(non_zero *v, int nU, int nI, int nF,char* filename, double** 
                 position = j;
             }
         }
-        fprintf(fp,"%d\n",position);
+        printf("%d\n",position);
     }
-    fclose(fp);
+    
 }
