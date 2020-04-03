@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
         matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
     }
 
-    create_output(init->v, init->nU, init->nI, init->nF, argv[1], L1, R1, init->num_zeros);
+    create_output(init->v, init->nU, init->nI, init->nF, L1, R1, init->num_zeros);
 
     for (int i = 0; i < init->nU; i++)
     {

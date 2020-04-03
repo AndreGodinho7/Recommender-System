@@ -120,7 +120,7 @@ double** transpose(double** matrix, int rows, int columns)
         
     }
     free(matrix);
-    
+
     return result;
 }
 
@@ -249,8 +249,8 @@ void recalculate_Matrix(double** L, double** R, double** pre_L, double** pre_R, 
 *
 *****************************************************************************/
 
-void create_output(non_zero *v, int nU, int nI, int nF,char* filename, double** L, double** R, int num_zeros){
-    FILE* fp = fopen("matFact.out", "w");
+void create_output(non_zero *v, int nU, int nI, int nF, double** L, double** R, int num_zeros){
+    
     int i,j,k;
     int z = 0;
     double element;
@@ -276,7 +276,7 @@ void create_output(non_zero *v, int nU, int nI, int nF,char* filename, double** 
                 position = j;
             }
         }
-        fprintf(fp,"%d\n",position);
+        printf("%d\n",position);
     }
-    fclose(fp);
+    
 }

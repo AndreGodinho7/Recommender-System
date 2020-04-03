@@ -55,7 +55,6 @@ int main(int argc, char* argv[])
         
     #pragma omp parallel
     {
-        printf("num threads : %d \n",omp_get_num_threads());
         matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
 
         for(int i = 0 ; i < init->iter ; i++){
@@ -74,7 +73,7 @@ int main(int argc, char* argv[])
         }
         
     }
-    create_output(init->v, init->nU, init->nI, init->nF, argv[1], L1, R1, init->num_zeros);
+    create_output(init->v, init->nU, init->nI, init->nF, L1, R1, init->num_zeros);
     
     for (int i = 0; i < init->nU; i++)
     {
