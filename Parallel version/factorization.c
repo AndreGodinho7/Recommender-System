@@ -115,7 +115,7 @@ double** transpose(double** matrix, int rows, int columns)
 {
     double** result = MatrixInit(columns, rows);
     int i,j;
-    #pragma omp parallel for private(i,j)
+    #pragma omp for private(i,j)
     for (i = 0; i < rows; ++i)
         for (j = 0; j < columns; ++j)
             result[j][i] = matrix[i][j];

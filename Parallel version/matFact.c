@@ -46,15 +46,17 @@ int main(int argc, char* argv[])
     L1 = L;
     L2 = L_hold;
         
-
-    R = transpose(R, init->nF, init->nI); 
-    R_hold = transpose(R_hold, init->nF, init->nI); 
-
-    R1 = R;
-    R2 = R_hold;
-        
     #pragma omp parallel
     {
+        R = transpose(R, init->nF, init->nI); 
+        R_hold = transpose(R_hold, init->nF, init->nI); 
+
+        #pragma omp single
+        {
+            R1 = R;
+            R2 = R_hold;
+        }    
+        
         matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
 
         for(int i = 0 ; i < init->iter ; i++){
