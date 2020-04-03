@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
 
     input_values* init;
     double sum;
-    printf("num threads : %d \n",omp_get_num_threads());
+    
     
     // for allocating matrices
     double** L, **R;
@@ -38,28 +38,24 @@ int main(int argc, char* argv[])
     L_hold = MatrixInit(init->nU, init->nF); // Matrix that stores the previous iteration of L
     R_hold = MatrixInit(init->nF, init->nI); // Matrix that stores the previous iteration of R
     
+
+
+    random_fill_LR(L, R, init->nU, init->nI, init->nF);
+        
+
+    L1 = L;
+    L2 = L_hold;
+        
+
+    R = transpose(R, init->nF, init->nI); 
+    R_hold = transpose(R_hold, init->nF, init->nI); 
+
+    R1 = R;
+    R2 = R_hold;
+        
     #pragma omp parallel
     {
-        #pragma omp single
-        {
-            random_fill_LR(L, R, init->nU, init->nI, init->nF);
-        }
-        
-        #pragma omp single
-        {
-            L1 = L;
-            L2 = L_hold;
-        }
-
-        R = transpose(R, init->nF, init->nI); 
-        R_hold = transpose(R_hold, init->nF, init->nI); 
-
-        #pragma omp single
-        {
-            R1 = R;
-            R2 = R_hold;
-        }
-
+        printf("num threads : %d \n",omp_get_num_threads());
         matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
 
         for(int i = 0 ; i < init->iter ; i++){

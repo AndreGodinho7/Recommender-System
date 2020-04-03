@@ -59,6 +59,7 @@ double** MatrixInit(int rows, int columns)
     for (int i = 0 ; i < rows ; i++) {
          matrix[i] = (double *)calloc(columns, sizeof(double));
     }
+    
 
     return matrix;
 }
@@ -119,12 +120,17 @@ double** transpose(double** matrix, int rows, int columns)
         for (j = 0; j < columns; ++j)
             result[j][i] = matrix[i][j];
 
+    #pragma omp barrier
+    {
     for (int k = 0; k < rows; k++)
     {
+
         free(matrix[k]);
         
     }
+
     free(matrix);
+    }
     return result;
 }
 
