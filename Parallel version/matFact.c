@@ -3,16 +3,16 @@
 
 #include"input.h"
 #include "factorization.h"
-#include <time.h>
 #include <limits.h>
 #include<omp.h>
 
 int main(int argc, char* argv[])
 {   
 
-    double begin = omp_get_wtime(); 
+
     input_values* init;
     double sum;
+    printf("num threads : %d \n",omp_get_num_threads());
     
     // for allocating matrices
     double** L, **R;
@@ -23,8 +23,7 @@ int main(int argc, char* argv[])
     double** R1, **R2; 
     double** tmp;
 
-    // double **A;
-    // double **B;
+
     int i,j,k;
 
     if (argc != 2){
@@ -33,8 +32,7 @@ int main(int argc, char* argv[])
     };
 
     init = read_input(argv[1]);
-    // A = init->matrix;
-    // B = MatrixInit(init->nU, init->nI);
+
     L = MatrixInit(init->nU, init->nF);
     R = MatrixInit(init->nF, init->nI);
     L_hold = MatrixInit(init->nU, init->nF); // Matrix that stores the previous iteration of L
@@ -95,14 +93,15 @@ int main(int argc, char* argv[])
         free(R1[i]);
         free(R2[i]);
     }
-
+   
+    free(init->v);
+     
+    
     free(R1);
     free(R2);
 
     free(init);
 
-    double end = omp_get_wtime();
-    double time_spent = end - begin;
-    printf("Execution time: %lf seconds\n", time_spent);
+
     return 0;
 }

@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
 
     free(R1);
     free(R2);
-
+    free(init->v);
     free(init);
 
     return 0;

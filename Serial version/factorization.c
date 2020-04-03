@@ -62,24 +62,6 @@ double** MatrixInit(int rows, int columns)
     return matrix;
 }
 
-/******************************************************************************
-* drand()
-*
-* Arguments: low - lower boundary
-*            high - upper boundary         
-*
-* Returns: double
-*										
-* Side-Effects: 
-*
-* Description: generates a random number between the two boundaries
-*
-*****************************************************************************/
-
-double drand ( double low, double high )
-{
-    return ( (double)rand() * ( high - low ) ) / (double)RAND_MAX + low;
-}
 
 /******************************************************************************
 * random_fill_LR()
@@ -131,6 +113,14 @@ double** transpose(double** matrix, int rows, int columns)
     for (int i = 0; i < rows; ++i)
         for (int j = 0; j < columns; ++j)
             result[j][i] = matrix[i][j];
+
+    for (int k = 0; k < rows; k++)
+    {
+        free(matrix[k]);
+        
+    }
+    free(matrix);
+    
     return result;
 }
 
