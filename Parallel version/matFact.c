@@ -45,11 +45,11 @@ int main(int argc, char* argv[])
 
     L1 = L;
     L2 = L_hold;
-        
+    R = transpose(R, init->nF, init->nI); 
+    R_hold = transpose(R_hold, init->nF, init->nI);     
     #pragma omp parallel
     {
-        R = transpose(R, init->nF, init->nI); 
-        R_hold = transpose(R_hold, init->nF, init->nI); 
+
 
         #pragma omp single
         {
