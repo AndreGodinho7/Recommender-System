@@ -37,10 +37,11 @@ int main(int argc, char* argv[])
     MPI_Type_create_struct(nitems, blocklengths, offsets, types, &mpi_non_zero);
     MPI_Type_commit(&mpi_non_zero);
 
+/*==========================================*/
 
     input_values* init;
     
-    //non_zero* aux;
+    
 
 
     // for allocating matrices
@@ -83,7 +84,7 @@ int main(int argc, char* argv[])
     int upper_bound;
 
     if(id==0){ //master process
-        //display[0]=0;
+        //display[0]=0; //For MPI_GATHERV() if used
         //recv_counts[0]=0;
         for(int i = 1 ; i<p ;i++){
             lower_bound=(i-1)*portion;
@@ -106,14 +107,35 @@ int main(int argc, char* argv[])
 
         MPI_Recv(&lower_bound, 1, MPI_INT, 0, MASTER_TO_SLAVE_TAG, MPI_COMM_WORLD, &status);
         MPI_Recv(&upper_bound, 1, MPI_INT, 0, MASTER_TO_SLAVE_TAG + 1, MPI_COMM_WORLD, &status);
-        MPI_Recv(&init->v[lower_bound], (upper_bound - lower_bound) , mpi_non_zero, 0, MASTER_TO_SLAVE_TAG + 2, MPI_COMM_WORLD, &status);
+        non_zero* aux = malloc((upper_bound-lower_bound) * sizeof(non_zero));
+        MPI_Recv(&aux[0], (upper_bound - lower_bound) , mpi_non_zero, 0, MASTER_TO_SLAVE_TAG + 2, MPI_COMM_WORLD, &status);
+        
         printf("process %d has %d elements to compute\n",id,upper_bound-lower_bound);
         printf("vector of non zero v starts at row %d, column %d\n",init->v[lower_bound].row,init->v[lower_bound].column);
-        matrix_mul_mpi(L1, R1, init->v, lower_bound,upper_bound, init->nF);
+        
+        matrix_mul(L1, R1, aux,(upper_bound - lower_bound) , init->nF);
+        
+        MPI_Isend(&lower_bound, 1, MPI_INT, 0, SLAVE_TO_MASTER_TAG, MPI_COMM_WORLD, &request);
+        MPI_Isend(&upper_bound, 1, MPI_INT, 0, SLAVE_TO_MASTER_TAG + 1, MPI_COMM_WORLD, &request);
+        MPI_Isend(&aux[0], (upper_bound - lower_bound), mpi_non_zero, 0, SLAVE_TO_MASTER_TAG + 2, MPI_COMM_WORLD, &request);
+        
+        free(aux);
     }
+
+    
+
+    
     //MPI_Gatherv(init->v, rank, MPI_INT, init->v, recv_counts, display, MPI_INT, 0, MPI_COMM_WORLD);
     
-    if(id==0){ // so esta aqui porque so a parte de cima esta em paralelo, e para nao dar 4 vezes o resultado
+    if(id==0){  // so esta aqui porque so a parte de cima esta em paralelo, e para nao dar 4 vezes o resultado
+        for(int i = 1 ; i<p ;i++){ // master process receives all results
+            MPI_Recv(&lower_bound, 1, MPI_INT, i, SLAVE_TO_MASTER_TAG, MPI_COMM_WORLD, &status);
+            MPI_Recv(&upper_bound, 1, MPI_INT, i, SLAVE_TO_MASTER_TAG + 1, MPI_COMM_WORLD, &status);
+            MPI_Recv(&init->v[lower_bound], (upper_bound - lower_bound) , mpi_non_zero, i, SLAVE_TO_MASTER_TAG + 2, MPI_COMM_WORLD, &status);
+        
+        }
+    
+    
     for(int i = 0 ; i < init->iter ; i++){
         /*update the matrix*/
             tmp = L1;
