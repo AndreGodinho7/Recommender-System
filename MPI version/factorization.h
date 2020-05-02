@@ -10,6 +10,7 @@ void random_fill_LR(double** L_, double** R_, int nU, int nI, int nF);
 double** transpose(double** matrix, int rows, int columns);
 
 void matrix_mul(double **firstMatrix, double **secondMatrix, non_zero* v,int num_zeros, int nF);
+void matrix_mul_mpi(double **firstMatrix, double **secondMatrix, non_zero* v,int lower, int up, int nF);
 
 void zero_LR(double** L, double** R, int nU, int nI, int nF);
 

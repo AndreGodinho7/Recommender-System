@@ -141,7 +141,16 @@ double** transpose(double** matrix, int rows, int columns)
 *              a column of secondmatrix
 *
 *****************************************************************************/
-
+void matrix_mul_mpi(double **firstMatrix, double **secondMatrix, non_zero* v, int lower, int up ,int nF){
+    printf("matrix mul for elements from %d to %d\n",lower,up);
+    for (int z = lower; z < up; z++){
+        int i = v[z].row;
+        int j = v[z].column;
+        v[z].B = 0;
+        for (int k = 0; k < nF; k++)
+        v[z].B += firstMatrix[i][k]*secondMatrix[j][k];
+    }
+}
 void matrix_mul(double **firstMatrix, double **secondMatrix, non_zero* v, int num_zeros ,int nF){
     for (int z = 0; z < num_zeros; z++){
         int i = v[z].row;
