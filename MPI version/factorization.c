@@ -2,8 +2,15 @@
 #include <stdlib.h>
 #include "input.h"
 #include <float.h>
+#include <mpi.h>
+
 #define RAND01 ((double) random() / (double) RAND_MAX)
 
+#define MASTER_TO_SLAVE_TAG 1 //tag for messages sent from master to slaves
+#define SLAVE_TO_MASTER_TAG 4 //tag for messages sent from slaves to master
+
+MPI_Status status; // store status of a MPI_Recv
+MPI_Request request; //capture request of a MPI_Isend
 /******************************************************************************
 * printMatrix()
 *
@@ -141,23 +148,95 @@ double** transpose(double** matrix, int rows, int columns)
 *              a column of secondmatrix
 *
 *****************************************************************************/
-void matrix_mul_mpi(double **firstMatrix, double **secondMatrix, non_zero* v, int lower, int up ,int nF){
-    printf("matrix mul for elements from %d to %d\n",lower,up);
-    for (int z = lower; z < up; z++){
-        int i = v[z].row;
-        int j = v[z].column;
-        v[z].B = 0;
-        for (int k = 0; k < nF; k++)
-        v[z].B += firstMatrix[i][k]*secondMatrix[j][k];
+void matrix_mul_mpi(double **firstMatrix, double **secondMatrix, non_zero* v, int num_zeros,int nF,int id, int p){
+    
+    
+    const int nitems=4;
+    int          blocklengths[4] = {1,1,1,1};
+    MPI_Datatype types[4] = {MPI_INT, MPI_INT,MPI_DOUBLE,MPI_DOUBLE};
+    MPI_Datatype mpi_non_zero;
+    MPI_Aint     offsets[4];
+
+    offsets[0] = offsetof(non_zero, row);
+    offsets[1] = offsetof(non_zero, column);
+    offsets[2] = offsetof(non_zero, A);
+    offsets[3] = offsetof(non_zero, B);
+
+    MPI_Type_create_struct(nitems, blocklengths, offsets, types, &mpi_non_zero);
+    MPI_Type_commit(&mpi_non_zero);
+
+    int length_vector=num_zeros;
+    //int left_overs=length_vector%p;
+    int portion = length_vector/(p-1);
+    //int display[p];    //For MPI_GATHERV() if used
+    //int recv_counts[p];
+    int lower_bound;
+    int upper_bound;
+
+    if(id==0){ //master process
+        //display[0]=0; //For MPI_GATHERV() if used
+        //recv_counts[0]=0;
+        for(int i = 1 ; i<p ;i++){
+            lower_bound=(i-1)*portion;
+            if((i+1)==p && (length_vector%(p-1) !=0)){
+                upper_bound=length_vector;
+            }
+            else{
+                upper_bound=lower_bound+portion;
+            }
+            //display[i]=lower_bound;
+            //recv_counts[i]=upper_bound-lower_bound;
+            printf("process %d is sending to %d\n", id,i);
+            MPI_Isend(&lower_bound, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG, MPI_COMM_WORLD, &request);
+            MPI_Isend(&upper_bound, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG + 1, MPI_COMM_WORLD, &request);
+            MPI_Isend(&v[lower_bound], (upper_bound - lower_bound), mpi_non_zero, i, MASTER_TO_SLAVE_TAG + 2, MPI_COMM_WORLD, &request);
+        }
     }
+
+    if(id>0){ //slave processors
+
+        MPI_Recv(&lower_bound, 1, MPI_INT, 0, MASTER_TO_SLAVE_TAG, MPI_COMM_WORLD, &status);
+        MPI_Recv(&upper_bound, 1, MPI_INT, 0, MASTER_TO_SLAVE_TAG + 1, MPI_COMM_WORLD, &status);
+        non_zero* aux = malloc((upper_bound-lower_bound) * sizeof(non_zero));
+        MPI_Recv(&aux[0], (upper_bound - lower_bound) , mpi_non_zero, 0, MASTER_TO_SLAVE_TAG + 2, MPI_COMM_WORLD, &status);
+        
+        printf("process %d has %d elements to compute\n",id,upper_bound-lower_bound);
+        //printf("vector of non zero v starts at row %d, column %d\n",init->v[lower_bound].row,init->v[lower_bound].column);
+    
+    for (int z = 0; z < upper_bound - lower_bound; z++){
+        int i = aux[z].row;
+        int j = aux[z].column;
+        aux[z].B = 0;
+        for (int k = 0; k < nF; k++)
+        aux[z].B += firstMatrix[i][k]*secondMatrix[j][k];
+    }
+        MPI_Isend(&lower_bound, 1, MPI_INT, 0, SLAVE_TO_MASTER_TAG, MPI_COMM_WORLD, &request);
+        MPI_Isend(&upper_bound, 1, MPI_INT, 0, SLAVE_TO_MASTER_TAG + 1, MPI_COMM_WORLD, &request);
+        MPI_Isend(&aux[0], (upper_bound - lower_bound), mpi_non_zero, 0, SLAVE_TO_MASTER_TAG + 2, MPI_COMM_WORLD, &request);
+        
+        free(aux);
+    }
+    if(id==0){  // so esta aqui porque so a parte de cima esta em paralelo, e para nao dar 4 vezes o resultado
+        for(int i = 1 ; i<p ;i++){ // master process receives all results
+            MPI_Recv(&lower_bound, 1, MPI_INT, i, SLAVE_TO_MASTER_TAG, MPI_COMM_WORLD, &status);
+            MPI_Recv(&upper_bound, 1, MPI_INT, i, SLAVE_TO_MASTER_TAG + 1, MPI_COMM_WORLD, &status);
+            MPI_Recv(&v[lower_bound], (upper_bound - lower_bound) , mpi_non_zero, i, SLAVE_TO_MASTER_TAG + 2, MPI_COMM_WORLD, &status);
+        
+        }
+    
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+
+
 }
 void matrix_mul(double **firstMatrix, double **secondMatrix, non_zero* v, int num_zeros ,int nF){
     for (int z = 0; z < num_zeros; z++){
         int i = v[z].row;
         int j = v[z].column;
         v[z].B = 0;
-        for (int k = 0; k < nF; k++)
-        v[z].B += firstMatrix[i][k]*secondMatrix[j][k];
+        for (int k = 0; k < nF; k++){
+            v[z].B += firstMatrix[i][k]*secondMatrix[j][k];
+        }
     }
 }
 
@@ -212,12 +291,13 @@ void zero_LR(double** L, double** R, int nU, int nI, int nF){
 *****************************************************************************/
 
 
-void recalculate_Matrix(double** L, double** R, double** pre_L, double** pre_R, int nU, int nI, int nF, double alpha, non_zero *v, int num_zeros){
+void recalculate_Matrix(double** L, double** R, double** pre_L, double** pre_R, int nU, int nI, int nF, double alpha, non_zero *v, int num_zeros,int id){
     int i, j, z;
     double a, b;
 
     zero_LR(L, R, nU, nI, nF);
 
+    //printf("o processador no recalculate que esta aqui e %d\n",id);
     for (z = 0; z < num_zeros; z++){
         i = v[z].row;
         j = v[z].column;
