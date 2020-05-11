@@ -12,6 +12,17 @@ struct _non_zero{
 
 typedef struct _non_zero non_zero;
 
+struct _division_mpi{
+  int lower_bound;
+  int upper_bound;
+  int initial_L;
+  int final_L;
+  int num_elements_L;
+};
+
+typedef struct _division_mpi division_mpi;
+
+
 struct _input_values{
   int iter;
   double alpha;
@@ -19,8 +30,9 @@ struct _input_values{
   int nU;
   int nI;
   int num_zeros;
+  int* boundaries;
   non_zero* v;
-  double** matrix;
+  double* matrix;
 };
 
 typedef struct _input_values input_values;

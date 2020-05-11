@@ -9,7 +9,7 @@ OBJS = matFact.o input.o factorization.o
 EXEC = matFact
 
 $(EXEC): $(OBJS)
-	$(CC) $(CFFLAGS) -o $(EXEC) $(OBJS)
+	$(CC) $(CFFLAGS) -o $(EXEC) $(OBJS) -lm
 
 matFact.o: matFact.c input.h
 	$(CC) $(CFLAGS) -c matFact.c
