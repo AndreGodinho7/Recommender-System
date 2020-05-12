@@ -45,9 +45,11 @@ int main(int argc, char* argv[])
 
     L1 = L;
     L2 = L_hold;
-        
+
+    omp_set_num_threads(2);   
     #pragma omp parallel
     {
+        printf("th %d\n", omp_get_num_threads());
         R = transpose(R, init->nF, init->nI); 
         R_hold = transpose(R_hold, init->nF, init->nI); 
 
@@ -56,7 +58,7 @@ int main(int argc, char* argv[])
             R1 = R;
             R2 = R_hold;
         }    
-        
+
         matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
 
         for(int i = 0 ; i < init->iter ; i++){
