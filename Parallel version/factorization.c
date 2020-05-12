@@ -85,7 +85,7 @@ double** MatrixInit(int rows, int columns)
 void random_fill_LR(double** L_, double** R_, int nU, int nI, int nF)
 {   
     int i, j;
-        
+    srandom(0);
     for(i = 0; i < nU; i++)
         for(j = 0; j < nF; j++)
             L_[i][j] = RAND01 / (double) nF;

@@ -45,13 +45,11 @@ int main(int argc, char* argv[])
 
     L1 = L;
     L2 = L_hold;
-
-    omp_set_num_threads(2);   
+    R = transpose(R, init->nF, init->nI); 
+    R_hold = transpose(R_hold, init->nF, init->nI);     
     #pragma omp parallel
     {
-        printf("th %d\n", omp_get_num_threads());
-        R = transpose(R, init->nF, init->nI); 
-        R_hold = transpose(R_hold, init->nF, init->nI); 
+
 
         #pragma omp single
         {
