@@ -30,7 +30,6 @@ struct _input_values{
   int nU;
   int nI;
   int num_zeros;
-  int* boundaries;
   non_zero* v;
   double* matrix;
 };

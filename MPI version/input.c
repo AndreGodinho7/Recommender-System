@@ -47,28 +47,20 @@ input_values* read_input(char* filename)
     fscanf(fpIn, "%d %d %d", &init->nU, &init->nI, &init->num_zeros); // 4th line
 
     init->v = malloc(init->num_zeros * sizeof(non_zero)); //alocate memory for an array with non_zero positions
-    init->boundaries=malloc((init->nU) * sizeof(int));
     
-    int row=1;
-    int count=0;
     int i=0;
     while (fscanf(fpIn,"%d %d %lf", &r, &c, &ele) != EOF){ // remaining lines
         
         init->v[i].row = r;
-        if(init->v[i].row==row){
-            init->boundaries[init->v[i].row-1]=count;
-            row++;
-        }
         /* populate the array with the non zero information */
         init->v[i].column = c;
         init->v[i].A = ele;
-        count++;
+
         i++;
     }
-    init->boundaries[row-1]=init->num_zeros;
-    for(int i=0;i<init->nU;i++){
+    /*for(int i=0;i<init->nU;i++){
       printf("Boundaries de row =%d  --> %d\n",i,init->boundaries[i]);
-    }
+    }*/
     fclose(fpIn);
     return init;
 }

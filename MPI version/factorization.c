@@ -170,13 +170,7 @@ void matrix_mul(double *firstMatrix, double *secondMatrix, non_zero* v, int num_
         v[z].B = 0;
         for (int k = 0; k < nF; k++){
             pos_row=i-start;
-            
-            if(firstMatrix[INDEX(pos_row,k,nF)]*secondMatrix[INDEX(j,k,nF)]<0){
-                printf("ZEROO - com L= %f and R = %f\n",firstMatrix[INDEX(pos_row,k,nF)],secondMatrix[INDEX(j,k,nF)]);
-                
-                
-            }
-        
+         
             v[z].B += firstMatrix[INDEX(pos_row,k,nF)]*secondMatrix[INDEX(j,k,nF)];
         }
     }
@@ -238,9 +232,9 @@ void recalculate_Matrix(double* L, double* R, double* pre_L, double* pre_R, int 
     double a, b;
  
     zero_LR(L, R, nU, nI, nF);
-    //printf("PUS A ZERO no processo %d\n",id);
+    
     int start= v[0].row;
-    //printf("O processo %d vai começar em == %d\n",id,start);
+    
     int pos_row;
     for (z = 0; z < num_zeros; z++){
         i = v[z].row;
@@ -250,12 +244,6 @@ void recalculate_Matrix(double* L, double* R, double* pre_L, double* pre_R, int 
 
         for(int k = 0; k < nF; k++){
             pos_row=i-start;
-            if(pre_R[INDEX(j,k,nF)]<0){
-                printf("\n\nSomething Wrong R %f\n\n",pre_R[INDEX(j,k,nF)]);
-            }
-            if(pre_L[INDEX(pos_row,k,nF)]<0){
-                printf("\n\nSomething Wrong L %f\n\n",pre_L[INDEX(pos_row,k,nF)]);
-            }
             L[INDEX(pos_row,k,nF)] += (a-b)*(pre_R[INDEX(j,k,nF)]);
             R[INDEX(j,k,nF)] += (a-b)*(pre_L[INDEX(pos_row,k,nF)]);
         }
