@@ -3,6 +3,7 @@
 #include "input.h"
 #include <float.h>
 #include <mpi.h>
+#include <math.h>
 
 #define RAND01 ((double) random() / (double) RAND_MAX)
 #define INDEX(row,column,num_column) ((row*num_column)+column)
@@ -10,6 +11,69 @@
 
 
 
+
+
+int getProcessUpBoundary(non_zero* v, int num_zeros,int p){
+    for (int i=0; i<num_zeros; i++){
+        if (v[i].process > p) return i;
+    }
+    return num_zeros;
+}
+
+
+void mark_process_in_nonzero(int num_zeros, non_zero *v, int NUM_PROCESSES){
+    int MAX_ELEMENTS = ceil(num_zeros/(double)NUM_PROCESSES);
+    int p_ele_counter = 0;
+    int p = 0;
+    int cur_row;
+    int i = 0;
+    //printf("MAX ELEMENTS = %d\n", MAX_ELEMENTS);
+
+    while(i < num_zeros){
+        if (p == NUM_PROCESSES-1){
+            v[i].process = p;
+            i++;
+            continue;
+        }
+
+        if (p_ele_counter < MAX_ELEMENTS){
+            v[i].process = p;
+            p_ele_counter++;
+        } 
+        else if (p_ele_counter == MAX_ELEMENTS){
+            if (v[i].row != v[i-1].row){
+                p += 1;
+                v[i].process = p;
+                p_ele_counter = 1;
+            }
+            else{
+                cur_row = v[i].row;
+                v[i].process = p;
+                p_ele_counter++;
+            }
+        }
+        else { // p_ele_counter > MAX_ELEMENTS
+            if (v[i].row == cur_row){ 
+                // non zero elements of the current row are written to the current process
+                v[i].process = p;
+                p_ele_counter += 1;
+            }
+            else{
+                // different row, increment p 
+                p += 1;
+                v[i].process = p;
+                p_ele_counter = 1;
+            }
+        }
+        i++;
+    }
+    /*printf("\n");
+    i=0;
+    while(i < num_zeros){
+        printf("v[%d].row = %d | v[%d].column = %d | v[%d].process = %d\n", i, v[i].row, i, v[i].column, i, v[i].process);
+        i++;
+    }*/
+}
 
 
 int find_upper_bound(int lower_row,int upper_row,int lower_bound,non_zero *v,int num_zeros){

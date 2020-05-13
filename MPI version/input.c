@@ -50,7 +50,7 @@ input_values* read_input(char* filename)
     
     int i=0;
     while (fscanf(fpIn,"%d %d %lf", &r, &c, &ele) != EOF){ // remaining lines
-        
+        init->v[i].process=0;
         init->v[i].row = r;
         /* populate the array with the non zero information */
         init->v[i].column = c;
@@ -58,9 +58,7 @@ input_values* read_input(char* filename)
 
         i++;
     }
-    /*for(int i=0;i<init->nU;i++){
-      printf("Boundaries de row =%d  --> %d\n",i,init->boundaries[i]);
-    }*/
+
     fclose(fpIn);
     return init;
 }

@@ -8,6 +8,7 @@ struct _non_zero{
   int column;
   double A;
   double B;
+  int process;
 };
 
 typedef struct _non_zero non_zero;

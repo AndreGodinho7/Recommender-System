@@ -46,16 +46,17 @@ int main(int argc, char* argv[])
     MPI_Type_commit(&mpi_division_slaves);
 
     /* create a type for struct _non_zero */
-    const int nitems=4;
-    int          blocklengths[4] = {1,1,1,1};
-    MPI_Datatype types[4] = {MPI_INT, MPI_INT,MPI_DOUBLE,MPI_DOUBLE};
+    const int nitems=5;
+    int          blocklengths[5] = {1,1,1,1,1};
+    MPI_Datatype types[5] = {MPI_INT, MPI_INT,MPI_DOUBLE,MPI_DOUBLE,MPI_INT};
     MPI_Datatype mpi_non_zero;
-    MPI_Aint     offsets[4];
+    MPI_Aint     offsets[5];
 
     offsets[0] = offsetof(non_zero, row);
     offsets[1] = offsetof(non_zero, column);
     offsets[2] = offsetof(non_zero, A);
     offsets[3] = offsetof(non_zero, B);
+    offsets[4] = offsetof(non_zero, process);
 
     MPI_Type_create_struct(nitems, blocklengths, offsets, types, &mpi_non_zero);
     MPI_Type_commit(&mpi_non_zero);
@@ -94,6 +95,9 @@ int main(int argc, char* argv[])
         // for allocating matrice
         init = read_input(argv[1]);
         
+        mark_process_in_nonzero(init->num_zeros,init->v,p);
+
+
 
         L = MatrixInit(init->nU, init->nF);
         
@@ -112,57 +116,31 @@ int main(int argc, char* argv[])
         R2 = R_hold;
         //==============================================================
         //divisao das matrizes para os slaves
-        int portion ;
-        double num_ceil;
-        int num_tasks=init->nU;
+        
+       
+       
         int my_up;
         int my_lower;
-        int lower_row;
-        int upper_row;
-        if(num_tasks%p!=0){
-            
-            num_ceil=num_tasks/(double)p;
-            portion = ceil(num_ceil);
-        
-        }
-        else{
-            portion=num_tasks/p;
-        }
-            
-        
-        lower_row=0;
-        upper_row=portion;
+
+     
         my_lower=0;
-        
-        my_up=find_upper_bound(lower_row,upper_row,my_lower,init->v,init->num_zeros);
+        my_up=getProcessUpBoundary(init->v,init->num_zeros,id);
         
         
         //printf("MASTER : processo %d gets from %d to %d\n",id,my_lower,my_up);
         lower_bound=my_up;
-        lower_row=upper_row;
-        num_tasks-=portion;
-        int curr_p=p-1;
+        
         for(int i=1;i<p;i++){
-            num_ceil=ceil(num_tasks/(double)curr_p);
+ 
             
-            if(num_tasks%curr_p!=0 &&((num_tasks - num_ceil>0))){
-                portion=num_ceil;
-                
-               
-            }
-            else
-            {
-                portion=num_tasks/curr_p;
-  
-            }
-            //printf("upper row =%d no %d\n",lower_row+portion,i);
-            upper_bound=find_upper_bound(lower_row,lower_row+portion,lower_bound,init->v,init->num_zeros);
+            
+            upper_bound=getProcessUpBoundary(init->v,init->num_zeros,i);
 
             slaves[i].lower_bound=lower_bound;
             slaves[i].upper_bound=upper_bound;
 
-            /*printf("MASTER : processo %d gets from %d to %d\n",i,lower_bound,upper_bound);
-            fflush(stdout);*/
+            //printf("MASTER : processo %d gets from %d to %d\n",i,lower_bound,upper_bound);
+            //fflush(stdout);
             MPI_Isend(&lower_bound, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG, MPI_COMM_WORLD, &request);
             MPI_Isend(&upper_bound, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG + 1, MPI_COMM_WORLD, &request);
             MPI_Isend(&init->nF, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG + 2, MPI_COMM_WORLD, &request);
@@ -195,13 +173,12 @@ int main(int argc, char* argv[])
             MPI_Isend(&R[0], init->nF*init->nI , MPI_DOUBLE, i, MASTER_TO_SLAVE_TAG +2 , MPI_COMM_WORLD, &request);
             MPI_Isend(&R_hold[0], init->nF*init->nI, MPI_DOUBLE, i, MASTER_TO_SLAVE_TAG + 3 , MPI_COMM_WORLD, &request);
             
-            
-            lower_row=lower_row+portion;
+                    
             lower_bound=upper_bound;
-            curr_p--;
-            num_tasks=num_tasks - (portion);
+            
             
         }
+
         lower_bound=my_lower;
         upper_bound=my_up;  
         int initial_row=init->v[lower_bound].row;
@@ -327,7 +304,6 @@ int main(int argc, char* argv[])
     
     int message_tag=0;
     int user_portion;
-    printf("alpha tem o valor de %f\n",alpha_value);
     for(int i = 0 ; i < iterations ; i++){
         //update the matrix
         /*if(i==250){
@@ -388,7 +364,7 @@ int main(int argc, char* argv[])
                 
         }        
         
-        MPI_Barrier(MPI_COMM_WORLD);
+
         MPI_Scatterv(&aux_sum_L[0], rcounts, displs, MPI_DOUBLE, &L1[0] , rcounts[id], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
         
