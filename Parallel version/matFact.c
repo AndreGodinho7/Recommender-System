@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
             R1 = R;
             R2 = R_hold;
         }    
-        
+
         matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
 
         for(int i = 0 ; i < init->iter ; i++){
