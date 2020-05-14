@@ -3,6 +3,10 @@
 
 void printMatrix(double* matrix, int rows, int columns);
 
+int getProcessUpBoundary(non_zero* v, int num_zeros,int p);
+
+void mark_process_in_nonzero(int num_zeros, non_zero *v, int NUM_PROCESSES);
+
 double* MatrixInit(int rows, int columns);
 
 void random_fill_LR(double* L_, double* R_, int nU, int nI, int nF);

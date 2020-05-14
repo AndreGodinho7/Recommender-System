@@ -3,6 +3,7 @@
 #include "input.h"
 #include <float.h>
 #include <mpi.h>
+#include <math.h>
 
 #define RAND01 ((double) random() / (double) RAND_MAX)
 #define INDEX(row,column,num_column) ((row*num_column)+column)
@@ -60,6 +61,69 @@ void mark_process_in_nonzero(int num_zeros, non_zero *v, int NUM_PROCESSES){
 
 }
 
+
+
+int getProcessUpBoundary(non_zero* v, int num_zeros,int p){
+    for (int i=0; i<num_zeros; i++){
+        if (v[i].process > p) return i;
+    }
+    return num_zeros;
+}
+
+
+void mark_process_in_nonzero(int num_zeros, non_zero *v, int NUM_PROCESSES){
+    int MAX_ELEMENTS = ceil(num_zeros/(double)NUM_PROCESSES);
+    int p_ele_counter = 0;
+    int p = 0;
+    int cur_row;
+    int i = 0;
+    //printf("MAX ELEMENTS = %d\n", MAX_ELEMENTS);
+
+    while(i < num_zeros){
+        if (p == NUM_PROCESSES-1){
+            v[i].process = p;
+            i++;
+            continue;
+        }
+
+        if (p_ele_counter < MAX_ELEMENTS){
+            v[i].process = p;
+            p_ele_counter++;
+        } 
+        else if (p_ele_counter == MAX_ELEMENTS){
+            if (v[i].row != v[i-1].row){
+                p += 1;
+                v[i].process = p;
+                p_ele_counter = 1;
+            }
+            else{
+                cur_row = v[i].row;
+                v[i].process = p;
+                p_ele_counter++;
+            }
+        }
+        else { // p_ele_counter > MAX_ELEMENTS
+            if (v[i].row == cur_row){ 
+                // non zero elements of the current row are written to the current process
+                v[i].process = p;
+                p_ele_counter += 1;
+            }
+            else{
+                // different row, increment p 
+                p += 1;
+                v[i].process = p;
+                p_ele_counter = 1;
+            }
+        }
+        i++;
+    }
+    /*printf("\n");
+    i=0;
+    while(i < num_zeros){
+        printf("v[%d].row = %d | v[%d].column = %d | v[%d].process = %d\n", i, v[i].row, i, v[i].column, i, v[i].process);
+        i++;
+    }*/
+}
 
 
 int find_upper_bound(int lower_row,int upper_row,int lower_bound,non_zero *v,int num_zeros){
@@ -220,13 +284,7 @@ void matrix_mul(double *firstMatrix, double *secondMatrix, non_zero* v, int num_
         v[z].B = 0;
         for (int k = 0; k < nF; k++){
             pos_row=i-start;
-            
-            if(firstMatrix[INDEX(pos_row,k,nF)]*secondMatrix[INDEX(j,k,nF)]<0){
-                printf("ZEROO - com L= %f and R = %f\n",firstMatrix[INDEX(pos_row,k,nF)],secondMatrix[INDEX(j,k,nF)]);
-                
-                
-            }
-        
+         
             v[z].B += firstMatrix[INDEX(pos_row,k,nF)]*secondMatrix[INDEX(j,k,nF)];
         }
     }
@@ -288,9 +346,9 @@ void recalculate_Matrix(double* L, double* R, double* pre_L, double* pre_R, int 
     double a, b;
  
     zero_LR(L, R, nU, nI, nF);
-    //printf("PUS A ZERO no processo %d\n",id);
+    
     int start= v[0].row;
-    //printf("O processo %d vai começar em == %d\n",id,start);
+    
     int pos_row;
     for (z = 0; z < num_zeros; z++){
         i = v[z].row;
@@ -300,12 +358,6 @@ void recalculate_Matrix(double* L, double* R, double* pre_L, double* pre_R, int 
 
         for(int k = 0; k < nF; k++){
             pos_row=i-start;
-            if(pre_R[INDEX(j,k,nF)]<0){
-                printf("\n\nSomething Wrong R %f\n\n",pre_R[INDEX(j,k,nF)]);
-            }
-            if(pre_L[INDEX(pos_row,k,nF)]<0){
-                printf("\n\nSomething Wrong L %f\n\n",pre_L[INDEX(pos_row,k,nF)]);
-            }
             L[INDEX(pos_row,k,nF)] += (a-b)*(pre_R[INDEX(j,k,nF)]);
             R[INDEX(j,k,nF)] += (a-b)*(pre_L[INDEX(pos_row,k,nF)]);
         }

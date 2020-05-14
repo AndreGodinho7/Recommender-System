@@ -9,6 +9,7 @@ struct _non_zero{
   int column;
   double A;
   double B;
+  int process;
 };
 
 typedef struct _non_zero non_zero;
@@ -31,7 +32,6 @@ struct _input_values{
   int nU;
   int nI;
   int num_zeros;
-  int* boundaries;
   non_zero* v;
   double* matrix;
 };
