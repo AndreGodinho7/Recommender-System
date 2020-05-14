@@ -26,6 +26,6 @@ void create_output(non_zero *v, int nU, int nI, int nF, double* L, double* R, in
 
 int find_upper_bound(int lower_row,int upper_row,int lower_bound,non_zero *v,int num_zeros);
 
-void mark_process_in_nonzero(int num_zeros, non_zero *v, int NUM_PROCESSES);
+
 
 #endif

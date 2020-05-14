@@ -97,7 +97,6 @@ int main(int argc, char* argv[])
 
         mark_process_in_nonzero(init->num_zeros, init->v, p);
         
-        mark_process_in_nonzero(init->num_zeros,init->v,p);
 
 
 

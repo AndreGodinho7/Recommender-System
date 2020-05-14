@@ -4,7 +4,6 @@
 
 
 struct _non_zero{
-  int process;
   int row;
   int column;
   double A;
