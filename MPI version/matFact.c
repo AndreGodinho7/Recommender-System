@@ -93,6 +93,8 @@ int main(int argc, char* argv[])
         };        
         // for allocating matrice
         init = read_input(argv[1]);
+
+        mark_process_in_nonzero(init->num_zeros, init->v, p);
         
 
         L = MatrixInit(init->nU, init->nF);
@@ -114,47 +116,20 @@ int main(int argc, char* argv[])
         //divisao das matrizes para os slaves
         int portion ;
         double num_ceil;
-        int num_tasks=init->nU;
         int my_up;
         int my_lower;
-        int lower_row;
         int upper_row;
-        if(num_tasks%p!=0){
-            
-            num_ceil=num_tasks/(double)p;
-            portion = ceil(num_ceil);
         
-        }
-        else{
-            portion=num_tasks/p;
-        }
-            
-        
-        lower_row=0;
-        upper_row=portion;
-        my_lower=0;
-        my_up=find_upper_bound(lower_row,upper_row,my_lower,init->v,init->num_zeros);
-        
-        
+        mark_process_in_nonzero(init->num_zeros, init->v, p);
+        my_up = getProcessUpBoundary(init->v, init->num_zeros, 0);
+        my_lower = 0;
+
         printf("MASTER : processo %d gets from %d to %d\n",id,my_lower,my_up);
         lower_bound=my_up;
-        lower_row=upper_row;
-        num_tasks-=portion;
+
         int curr_p=3;
         for(int i=1;i<p;i++){
-            num_ceil=ceil(num_tasks/(double)curr_p);
-            
-            if(num_tasks%curr_p!=0 &&((num_tasks - num_ceil>0))){
-                portion=num_ceil;
-                
-               
-            }
-            else
-            {
-                portion=num_tasks/curr_p;
-  
-            }
-            upper_bound=find_upper_bound(lower_row,lower_row+portion,lower_bound,init->v,init->num_zeros);
+            upper_bound = getProcessUpBoundary(init->v, init->num_zeros, i);
 
             slaves[i].lower_bound=lower_bound;
             slaves[i].upper_bound=upper_bound;
@@ -188,10 +163,8 @@ int main(int argc, char* argv[])
             MPI_Isend(&R[0], init->nF*init->nI , MPI_DOUBLE, i, MASTER_TO_SLAVE_TAG +2 , MPI_COMM_WORLD, &request);
             MPI_Isend(&R_hold[0], init->nF*init->nI, MPI_DOUBLE, i, MASTER_TO_SLAVE_TAG + 3 , MPI_COMM_WORLD, &request);
 
-            lower_row=lower_row+portion;
             lower_bound=upper_bound;
             curr_p--;
-            num_tasks=num_tasks - (portion);
             
         }
         lower_bound=my_lower;

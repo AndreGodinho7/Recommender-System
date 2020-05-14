@@ -62,6 +62,7 @@ input_values* read_input(char* filename)
         /* populate the array with the non zero information */
         init->v[i].column = c;
         init->v[i].A = ele;
+        init->v[i].process = 0;
         count++;
         i++;
     }
