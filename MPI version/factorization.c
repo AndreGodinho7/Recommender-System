@@ -313,11 +313,11 @@ void recalculate_Matrix(double* L, double* R, double* pre_L, double* pre_R, int 
         }
     }
 
-    /*for(int u = 0; u < nU; u++)
+    for(int u = 0; u < nU; u++)
         for(int f = 0; f < nF; f++)
             L[INDEX(u,f,nF)] = pre_L[INDEX(u,f,nF)] + alpha*2*L[INDEX(u,f,nF)];
 
-
+/*
     for(int i = 0; i < nI; i++)
         for(int f = 0; f < nF; f++)
             R[INDEX(i,f,nF)] = pre_R[INDEX(i,f,nF)] + alpha*2*R[INDEX(i,f,nF)]; */

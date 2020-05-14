@@ -7,7 +7,7 @@
 #include <mpi.h>
 
 #define MASTER_TO_SLAVE_TAG 1 //tag for messages sent from master to slaves
-#define SLAVE_TO_MASTER_TAG 5 //tag for messages sent from slaves to master
+#define SLAVE_TO_MASTER_TAG 20 //tag for messages sent from slaves to master
 #define INDEX(row,column,num_column) ((row*num_column)+column)
 
 MPI_Status status; // store status of a MPI_Recv
@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
 
 
     if(id==0){
-
+        
         if (argc != 2){
                 printf("ERROR: inserted more than 1 input file.\n");
                 exit(0);
@@ -126,10 +126,10 @@ int main(int argc, char* argv[])
         my_lower=0;
         my_up=getProcessUpBoundary(init->v,init->num_zeros,id);
         
-        
-        //printf("MASTER : processo %d gets from %d to %d\n",id,my_lower,my_up);
+        printf("Existem %d processos\n",p);
+        printf("MASTER : processo %d gets from %d to %d\n",id,my_lower,my_up);
         lower_bound=my_up;
-        
+        //int message_tag
         for(int i=1;i<p;i++){
  
             
@@ -139,17 +139,18 @@ int main(int argc, char* argv[])
             slaves[i].lower_bound=lower_bound;
             slaves[i].upper_bound=upper_bound;
 
-            //printf("MASTER : processo %d gets from %d to %d\n",i,lower_bound,upper_bound);
-            //fflush(stdout);
-            MPI_Isend(&lower_bound, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG, MPI_COMM_WORLD, &request);
-            MPI_Isend(&upper_bound, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG + 1, MPI_COMM_WORLD, &request);
-            MPI_Isend(&init->nF, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG + 2, MPI_COMM_WORLD, &request);
-            MPI_Isend(&init->v[lower_bound], (upper_bound - lower_bound), mpi_non_zero, i, MASTER_TO_SLAVE_TAG + 3, MPI_COMM_WORLD, &request);
-            
-            
-            int initial_row=init->v[lower_bound].row;
+            printf("MASTER : processo %d gets from %d to %d\n",i,slaves[i].lower_bound,slaves[i].upper_bound);
+            fflush(stdout);
 
-            int final_row=init->v[upper_bound-1].row + 1;
+            MPI_Isend(&slaves[i].lower_bound, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG +i, MPI_COMM_WORLD, &request);
+            MPI_Isend(&slaves[i].upper_bound, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG + 1 +i, MPI_COMM_WORLD, &request);
+            MPI_Isend(&init->nF, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG + 2 +i, MPI_COMM_WORLD, &request);
+            MPI_Isend(&init->v[slaves[i].lower_bound], (slaves[i].upper_bound - slaves[i].lower_bound), mpi_non_zero, i, MASTER_TO_SLAVE_TAG + 3 +i, MPI_COMM_WORLD, &request);
+            
+            
+            int initial_row=init->v[slaves[i].lower_bound].row;
+
+            int final_row=init->v[slaves[i].upper_bound-1].row + 1;
 
             int portion_L=(final_row-initial_row)*init->nF; 
 
@@ -206,27 +207,35 @@ int main(int argc, char* argv[])
     }
     if(id>0){
     
-        MPI_Recv(&lower_bound, 1, MPI_INT, 0, MASTER_TO_SLAVE_TAG, MPI_COMM_WORLD, &status);
-        MPI_Recv(&upper_bound, 1, MPI_INT, 0, MASTER_TO_SLAVE_TAG + 1, MPI_COMM_WORLD, &status);
-        MPI_Recv(&num_Features, 1, MPI_INT, 0, MASTER_TO_SLAVE_TAG + 2, MPI_COMM_WORLD, &status);
+        MPI_Recv(&lower_bound, 1, MPI_INT, 0, MASTER_TO_SLAVE_TAG +id, MPI_COMM_WORLD, &status);
+        MPI_Recv(&upper_bound, 1, MPI_INT, 0, MASTER_TO_SLAVE_TAG + 1+id, MPI_COMM_WORLD, &status);
+        MPI_Recv(&num_Features, 1, MPI_INT, 0, MASTER_TO_SLAVE_TAG + 2 +id, MPI_COMM_WORLD, &status);
         init = (input_values*)malloc(sizeof(input_values));
         init->v = malloc((upper_bound-lower_bound) * sizeof(non_zero));
         
         
-        MPI_Recv(&init->v[0], (upper_bound - lower_bound) , mpi_non_zero, 0, MASTER_TO_SLAVE_TAG + 3, MPI_COMM_WORLD, &status);
+        MPI_Recv(&init->v[0], (upper_bound - lower_bound) , mpi_non_zero, 0, MASTER_TO_SLAVE_TAG + 3+id, MPI_COMM_WORLD, &status);
+        /*printf("V array received in process %d\n",id);
+        fflush(stdout);*/
+        printf("lower bound = %d upper_bound=%d on process %d\n",lower_bound,upper_bound,id);
+        fflush(stdout);
+
         int initial_row=init->v[0].row;
 
         int final_row=init->v[upper_bound - lower_bound-1].row + 1 ;
 
         int portion_L=(final_row-initial_row)*num_Features;
 
-        //printf("Estou a ver da linha %d ate %d no processo %d\n",initial_row,final_row,id);
+        printf("Estou a ver da linha %d ate %d no processo %d\n",initial_row,final_row,id);
+        fflush(stdout);
         int init_row=final_row-initial_row;
         L = MatrixInit(init_row, num_Features);
         L_hold = MatrixInit(init_row, num_Features);
 
         MPI_Recv(&L[0], portion_L , MPI_DOUBLE, 0, MASTER_TO_SLAVE_TAG , MPI_COMM_WORLD, &status);
         MPI_Recv(&L_hold[0], portion_L , MPI_DOUBLE, 0, MASTER_TO_SLAVE_TAG + 1, MPI_COMM_WORLD, &status);
+        printf("L matrix received in process %d\n",id);
+        fflush(stdout);
 
         MPI_Recv(&iterations, 1, MPI_INT, 0, MASTER_TO_SLAVE_TAG  , MPI_COMM_WORLD, &status);
         MPI_Recv(&alpha_value, 1, MPI_DOUBLE, 0, MASTER_TO_SLAVE_TAG + 2 , MPI_COMM_WORLD, &status);
@@ -241,7 +250,9 @@ int main(int argc, char* argv[])
         MPI_Recv(&R[0], num_Items*num_Features , MPI_DOUBLE, 0, MASTER_TO_SLAVE_TAG + 2, MPI_COMM_WORLD, &status);
         MPI_Recv(&R_hold[0], num_Items*num_Features , MPI_DOUBLE, 0, MASTER_TO_SLAVE_TAG + 3, MPI_COMM_WORLD, &status);
         MPI_Recv(&slaves[0], p , mpi_division_slaves, 0, MASTER_TO_SLAVE_TAG , MPI_COMM_WORLD, &status);
-       
+        printf("slave lower = %d slaves upper =%d on process %d\n",slaves[id].lower_bound,slaves[id].upper_bound,id);
+        //printf("R matrix received in process %d\n",id);
+        fflush(stdout);       
         L1 = L;
         L2 = L_hold; 
         R1 = R;
@@ -366,8 +377,7 @@ int main(int argc, char* argv[])
         
 
         MPI_Scatterv(&aux_sum_L[0], rcounts, displs, MPI_DOUBLE, &L1[0] , rcounts[id], MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-        
+ 
         MPI_Bcast(&R1[0],num_Items*num_Features , MPI_DOUBLE, 0, MPI_COMM_WORLD );
 
         matrix_mul(L1,R1,init->v,slaves[id].upper_bound-slaves[id].lower_bound,num_Features);
