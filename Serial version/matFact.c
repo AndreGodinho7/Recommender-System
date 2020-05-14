@@ -3,7 +3,6 @@
 
 #include"input.h"
 #include "factorization.h"
-#include <limits.h>
 
 int main(int argc, char* argv[])
 {   
