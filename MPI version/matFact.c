@@ -76,7 +76,6 @@ int main(int argc, char* argv[])
 
     // Allocacao de todas as variaveis para a master
     input_values* init ;
-    //non_zero* aux;
     division_mpi* slaves; //struct that saves position of L and elements that each processor gets;
     slaves = malloc(p * sizeof(division_mpi));
     int num_Features;
@@ -127,8 +126,8 @@ int main(int argc, char* argv[])
         my_lower=0;
         my_up=getProcessUpBoundary(init->v,init->num_zeros,id);
         
-        printf("Existem %d processos\n",p);
-        printf("MASTER : processo %d gets from %d to %d\n",id,my_lower,my_up);
+        //printf("Existem %d processos\n",p);
+        //printf("MASTER : processo %d gets from %d to %d\n",id,my_lower,my_up);
         lower_bound=my_up;
         //int message_tag
         for(int i=1;i<p;i++){
@@ -140,7 +139,7 @@ int main(int argc, char* argv[])
             slaves[i].lower_bound=lower_bound;
             slaves[i].upper_bound=upper_bound;
 
-            printf("MASTER : processo %d gets from %d to %d\n",i,slaves[i].lower_bound,slaves[i].upper_bound);
+            //printf("MASTER : processo %d gets from %d to %d\n",i,slaves[i].lower_bound,slaves[i].upper_bound);
             fflush(stdout);
 
             MPI_Isend(&slaves[i].lower_bound, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG +i, MPI_COMM_WORLD, &request);
@@ -176,7 +175,7 @@ int main(int argc, char* argv[])
             MPI_Isend(&R_hold[0], init->nF*init->nI, MPI_DOUBLE, i, MASTER_TO_SLAVE_TAG + 3 , MPI_COMM_WORLD, &request);
             
                     
-            lower_bound=upper_bound;
+            lower_bound=slaves[i].upper_bound;
             
             
         }
@@ -218,7 +217,7 @@ int main(int argc, char* argv[])
         MPI_Recv(&init->v[0], (upper_bound - lower_bound) , mpi_non_zero, 0, MASTER_TO_SLAVE_TAG + 3+id, MPI_COMM_WORLD, &status);
         /*printf("V array received in process %d\n",id);
         fflush(stdout);*/
-        printf("lower bound = %d upper_bound=%d on process %d\n",lower_bound,upper_bound,id);
+        //printf("lower bound = %d upper_bound=%d on process %d\n",lower_bound,upper_bound,id);
         fflush(stdout);
 
         int initial_row=init->v[0].row;
@@ -227,7 +226,7 @@ int main(int argc, char* argv[])
 
         int portion_L=(final_row-initial_row)*num_Features;
 
-        printf("Estou a ver da linha %d ate %d no processo %d\n",initial_row,final_row,id);
+        //printf("Estou a ver da linha %d ate %d no processo %d\n",initial_row,final_row,id);
         fflush(stdout);
         int init_row=final_row-initial_row;
         L = MatrixInit(init_row, num_Features);
@@ -235,8 +234,7 @@ int main(int argc, char* argv[])
 
         MPI_Recv(&L[0], portion_L , MPI_DOUBLE, 0, MASTER_TO_SLAVE_TAG , MPI_COMM_WORLD, &status);
         MPI_Recv(&L_hold[0], portion_L , MPI_DOUBLE, 0, MASTER_TO_SLAVE_TAG + 1, MPI_COMM_WORLD, &status);
-        printf("L matrix received in process %d\n",id);
-        fflush(stdout);
+ 
 
         MPI_Recv(&iterations, 1, MPI_INT, 0, MASTER_TO_SLAVE_TAG  , MPI_COMM_WORLD, &status);
         MPI_Recv(&alpha_value, 1, MPI_DOUBLE, 0, MASTER_TO_SLAVE_TAG + 2 , MPI_COMM_WORLD, &status);
@@ -251,9 +249,7 @@ int main(int argc, char* argv[])
         MPI_Recv(&R[0], num_Items*num_Features , MPI_DOUBLE, 0, MASTER_TO_SLAVE_TAG + 2, MPI_COMM_WORLD, &status);
         MPI_Recv(&R_hold[0], num_Items*num_Features , MPI_DOUBLE, 0, MASTER_TO_SLAVE_TAG + 3, MPI_COMM_WORLD, &status);
         MPI_Recv(&slaves[0], p , mpi_division_slaves, 0, MASTER_TO_SLAVE_TAG , MPI_COMM_WORLD, &status);
-        printf("slave lower = %d slaves upper =%d on process %d\n",slaves[id].lower_bound,slaves[id].upper_bound,id);
-        //printf("R matrix received in process %d\n",id);
-        fflush(stdout);       
+
         L1 = L;
         L2 = L_hold; 
         R1 = R;
@@ -282,11 +278,12 @@ int main(int argc, char* argv[])
 
         
         aux_sum_L= MatrixInit(init->nU, init->nF); // auxiliar matriz to sum matrix L
-        aux_sum_R= MatrixInit(init->nI, init->nF); // auxiliar matriz to sum matrix R
+        //aux_sum_R= MatrixInit(init->nI, init->nF); // auxiliar matriz to sum matrix R
         
         //printMatrix(L1,init->nU, init->nF);
     }
 
+    aux_sum_R= MatrixInit(num_Items, num_Features);
     int *displs = (int *)malloc(p*sizeof(int)); 
     int *scounts = (int *)malloc(p*sizeof(int));
     int *rcounts = (int *)malloc(p*sizeof(int));  
@@ -314,8 +311,9 @@ int main(int argc, char* argv[])
     fflush(stdout);*/
         
     
-    int message_tag=0;
+    
     int user_portion;
+
     for(int i = 0 ; i < iterations ; i++){
         //update the matrix
         /*if(i==250){
@@ -330,7 +328,7 @@ int main(int argc, char* argv[])
         R1 = R2;
         R2 = tmp; 
        
-        message_tag=(i*2);
+        
         zeros_count= slaves[id].upper_bound - slaves[id].lower_bound;
 
 
@@ -344,54 +342,19 @@ int main(int argc, char* argv[])
 
         }
         recalculate_Matrix(L1, R1, L2, R2, user_portion, num_Items,num_Features,alpha_value, init->v ,zeros_count ,id,p,slaves);
-
-        MPI_Gatherv(&L1[0], slaves[id].num_elements_L, MPI_DOUBLE, &aux_sum_L[0], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        if(id==0){
-            //printMatrix(aux_sum_L,num_Users,num_Features);
-            for(int u = 0; u < num_Users; u++){               
-                for(int f = 0; f < num_Features; f++){           
-                    aux_sum_L[INDEX(u,f,num_Features)] = L2[INDEX(u,f,num_Features)] + alpha_value*2*aux_sum_L[INDEX(u,f,num_Features)];              
-
-                }
-            }
+        
+        MPI_Allreduce(R1, aux_sum_R, num_Items*num_Features, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        
+        for(int k = 0; k < num_Items; k++){
+            for(int f = 0; f < num_Features; f++){
+                R1[INDEX(k,f,num_Features)] = R2[INDEX(k,f,num_Features)] + alpha_value*2*aux_sum_R[INDEX(k,f,num_Features)];                 
+            } 
         }
-
-        
-        MPI_Reduce(&R1[0], &aux_sum_R[0], num_Items*num_Features, MPI_DOUBLE, MPI_SUM, 0,MPI_COMM_WORLD);
-
-        if(id==0){
-            //printMatrix(aux_sum_R,num_Items,num_Features);
-            for(int k = 0; k < num_Items; k++){
-                for(int f = 0; f < num_Features; f++){
-                    R1[INDEX(k,f,num_Features)] = R2[INDEX(k,f,num_Features)] + alpha_value*2*aux_sum_R[INDEX(k,f,num_Features)]; 
-                } 
-            }
-            /*if(iterations-i < 2){
-                printf("Matrix L na iteracao %d\n",i);
-                printMatrix(aux_sum_L,num_Users,num_Features);
-                printf("Matrix R na iteracao %d\n",i);     
-                printMatrix(R1,num_Items,num_Features);
-            }*/
-
-                
-        }        
-        
-
-        MPI_Scatterv(&aux_sum_L[0], rcounts, displs, MPI_DOUBLE, &L1[0] , rcounts[id], MPI_DOUBLE, 0, MPI_COMM_WORLD);
- 
-        MPI_Bcast(&R1[0],num_Items*num_Features , MPI_DOUBLE, 0, MPI_COMM_WORLD );
+      
 
         matrix_mul(L1,R1,init->v,slaves[id].upper_bound-slaves[id].lower_bound,num_Features);
 
-        if(id>0){
-           MPI_Isend(&init->v[0], (slaves[id].upper_bound-slaves[id].lower_bound), mpi_non_zero, 0, SLAVE_TO_MASTER_TAG + message_tag, MPI_COMM_WORLD, &request); 
-        }
-        if(id==0){
-            for(int k = 1 ; k<p ;k++){ // master process receives all results
-                MPI_Recv(&init->v[slaves[k].lower_bound], (slaves[k].upper_bound-slaves[k].lower_bound) , mpi_non_zero, k, SLAVE_TO_MASTER_TAG +message_tag, MPI_COMM_WORLD, &status);
-        
-            }             
-        }
+
 
 
         
@@ -401,18 +364,35 @@ int main(int argc, char* argv[])
         printMatrix(R1,init->nI, init->nF); */
         
 
+
+    }
+
+    if(id>0){
+        MPI_Isend(&init->v[0], (slaves[id].upper_bound-slaves[id].lower_bound), mpi_non_zero, 0, SLAVE_TO_MASTER_TAG + 1, MPI_COMM_WORLD, &request); 
     }
     if(id==0){
-        create_output(init->v, init->nU, init->nI, init->nF, L1, R1, init->num_zeros);
-        free(init->v);
-        free(init);
+        for(int k = 1 ; k<p ;k++){ // master process receives all results
+            MPI_Recv(&init->v[slaves[k].lower_bound], (slaves[k].upper_bound-slaves[k].lower_bound) , mpi_non_zero, k, SLAVE_TO_MASTER_TAG +1, MPI_COMM_WORLD, &status);
+    
+        }             
+    }
+
+    MPI_Gatherv(&L1[0], slaves[id].num_elements_L, MPI_DOUBLE, &aux_sum_L[0], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    if(id==0){
+        create_output(init->v, init->nU, init->nI, init->nF, aux_sum_L, R1, init->num_zeros);
+        //free(init->v);
+        //free(init);
+        free(aux_sum_L);
         
     }
+    free(init->v);
+    free(init);    
     free(L1);
     free(L2);
     free(slaves);
     free(R1);
     free(R2);
+    free(aux_sum_R);
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize ();
     return 0;
