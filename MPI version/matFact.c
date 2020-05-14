@@ -94,6 +94,8 @@ int main(int argc, char* argv[])
         };        
         // for allocating matrice
         init = read_input(argv[1]);
+
+        mark_process_in_nonzero(init->num_zeros, init->v, p);
         
         mark_process_in_nonzero(init->num_zeros,init->v,p);
 

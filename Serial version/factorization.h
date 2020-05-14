@@ -20,5 +20,4 @@ void copy_matrix(double** original, double** copied,int rows, int columns);
 
 void create_output(non_zero *v, int nU, int nI, int nF, double** L, double** R, int num_zeros);
 
-
 #endif
