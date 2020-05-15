@@ -257,9 +257,9 @@ int main(int argc, char* argv[])
        
         matrix_mul(L1,R1,init->v,upper_bound-lower_bound,num_Features);
      
-        MPI_Isend(&lower_bound, 1, MPI_INT, 0, SLAVE_TO_MASTER_TAG, MPI_COMM_WORLD, &request);
-        MPI_Isend(&upper_bound, 1, MPI_INT, 0, SLAVE_TO_MASTER_TAG + 1, MPI_COMM_WORLD, &request);
-        MPI_Isend(&init->v[0], (upper_bound - lower_bound), mpi_non_zero, 0, SLAVE_TO_MASTER_TAG + 2, MPI_COMM_WORLD, &request);
+        //MPI_Isend(&lower_bound, 1, MPI_INT, 0, SLAVE_TO_MASTER_TAG, MPI_COMM_WORLD, &request);
+        //MPI_Isend(&upper_bound, 1, MPI_INT, 0, SLAVE_TO_MASTER_TAG + 1, MPI_COMM_WORLD, &request);
+        MPI_Isend(&init->v[0], (slaves[id].upper_bound - slaves[id].lower_bound), mpi_non_zero, 0, SLAVE_TO_MASTER_TAG + 2, MPI_COMM_WORLD, &request);
         
 
            
@@ -270,9 +270,9 @@ int main(int argc, char* argv[])
     if(id==0){
         matrix_mul(L1, R1, init->v, upper_bound-lower_bound , init->nF); 
         for(int i = 1 ; i<p ;i++){ // master process receives all results
-            MPI_Recv(&lower_bound, 1, MPI_INT, i, SLAVE_TO_MASTER_TAG, MPI_COMM_WORLD, &status);
-            MPI_Recv(&upper_bound, 1, MPI_INT, i, SLAVE_TO_MASTER_TAG + 1, MPI_COMM_WORLD, &status);
-            MPI_Recv(&init->v[lower_bound], (upper_bound - lower_bound) , mpi_non_zero, i, SLAVE_TO_MASTER_TAG + 2, MPI_COMM_WORLD, &status);
+            //MPI_Recv(&lower_bound, 1, MPI_INT, i, SLAVE_TO_MASTER_TAG, MPI_COMM_WORLD, &status);
+            //MPI_Recv(&upper_bound, 1, MPI_INT, i, SLAVE_TO_MASTER_TAG + 1, MPI_COMM_WORLD, &status);
+            MPI_Recv(&init->v[slaves[i].lower_bound], (slaves[i].upper_bound - slaves[i].lower_bound) , mpi_non_zero, i, SLAVE_TO_MASTER_TAG + 2, MPI_COMM_WORLD, &status);
         
         }   
 
@@ -332,15 +332,15 @@ int main(int argc, char* argv[])
         zeros_count= slaves[id].upper_bound - slaves[id].lower_bound;
 
 
-        if(id==0){
-            user_portion=num_Users;
-        }
-        if(id>0){
-            int initial_row=init->v[0].row;
-            int final_row=init->v[zeros_count-1].row + 1 ;
-            user_portion= final_row-initial_row;  
+        //if(id==0){
+            //user_portion=num_Users;
+        //}
+        //if(id>0){
+        int initial_row=init->v[0].row;
+        int final_row=init->v[zeros_count-1].row + 1 ;
+        user_portion= final_row-initial_row;  
 
-        }
+        //}
         recalculate_Matrix(L1, R1, L2, R2, user_portion, num_Items,num_Features,alpha_value, init->v ,zeros_count ,id,p,slaves);
         
         MPI_Allreduce(R1, aux_sum_R, num_Items*num_Features, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
