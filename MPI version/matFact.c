@@ -18,6 +18,7 @@ MPI_Request request_rec_0;
 MPI_Request request_rec_1;
 
 int main(int argc, char* argv[])
+
 {   
 
     MPI_Init(&argc, &argv);
@@ -217,7 +218,6 @@ int main(int argc, char* argv[])
 
             //MPI_Isend(&aux_sum_L[INDEX(initial_row,0,init->nF)], portion_L, MPI_DOUBLE, i, MASTER_TO_SLAVE_TAG , MPI_COMM_WORLD, &request);
             //MPI_Isend(&aux_sum_L[INDEX(initial_row,0,init->nF)], portion_L, MPI_DOUBLE, i, MASTER_TO_SLAVE_TAG + 1 , MPI_COMM_WORLD, &request);
-            
             
 
             MPI_Isend(&init->iter, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG  , MPI_COMM_WORLD, &request);
