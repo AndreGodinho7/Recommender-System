@@ -43,7 +43,12 @@ int main(int argc, char* argv[])
 
     for(int i = 0 ; i < init->iter ; i++){
         /*update the matrix*/
-            tmp = L1;
+        if(i==5){
+            
+            break;
+        }            
+
+	tmp = L1;
             L1 = L2;
             L2 = tmp;
 
@@ -52,6 +57,11 @@ int main(int argc, char* argv[])
             R2 = tmp; 
         recalculate_Matrix(L1, R1, L2, R2, init->nU, init->nI, init->nF, init->alpha,init->v ,init->num_zeros);
         matrix_mul(L1, R1, init->v, init->num_zeros, init->nF);
+	/*printf("Matrix L iteracao %d",i);
+	printMatrix(L1,init->nU,init->nF);
+	printf("Matrix R iteracao %d",i);
+	printMatrix(R1,init->nI,init->nF);*/
+
     }
 
     create_output(init->v, init->nU, init->nI, init->nF, L1, R1, init->num_zeros);

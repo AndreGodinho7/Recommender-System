@@ -156,12 +156,6 @@ int main(int argc, char* argv[])
         L2 = L_hold;
         L1=L;
 
-        
-        /*for(int num=0;num<portion_L;num++){
-            L[num]=L_sent[num];
-        
-        }*/
-
 
         /*printf("Estou a ver da linha %d ate %d no processo %d\n",initial_row,final_row,id);
         fflush(stdout);*/
@@ -230,9 +224,7 @@ int main(int argc, char* argv[])
             MPI_Isend(&init->alpha, 1, MPI_DOUBLE, i, MASTER_TO_SLAVE_TAG + 2 , MPI_COMM_WORLD, &request); 
             MPI_Isend(&init->nU, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG + 3 , MPI_COMM_WORLD, &request);
             MPI_Isend(&init->nI, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG , MPI_COMM_WORLD, &request);
-            //MPI_Isend(&R[0], init->nF*init->nI , MPI_DOUBLE, i, MASTER_TO_SLAVE_TAG +2 , MPI_COMM_WORLD, &request);
-            //MPI_Isend(&R_hold[0], init->nF*init->nI, MPI_DOUBLE, i, MASTER_TO_SLAVE_TAG + 3 , MPI_COMM_WORLD, &request);
-            
+
                     
             lower_bound=slaves[i].upper_bound;
             
@@ -250,8 +242,6 @@ int main(int argc, char* argv[])
 
 
 
-        /*printf("portion zero = %d\n",portion_zero);
-        fflush(stdout);*/
         aux =(non_zero*) malloc( portion_zero* sizeof(non_zero));
         for(int y=0;y<portion_zero;y++){
             aux[y]=init->v[y];
@@ -289,15 +279,14 @@ int main(int argc, char* argv[])
 
         
         MPI_Recv(&init->v[0], (upper_bound - lower_bound) , mpi_non_zero, 0, MASTER_TO_SLAVE_TAG + 3+id, MPI_COMM_WORLD, &status);
-        /*printf("RECEBI V na slave %d\n",id);
-        fflush(stdout);*/
+ 
         MPI_Recv(&initial_row, 1, MPI_INT, 0, MASTER_TO_SLAVE_TAG +3+id, MPI_COMM_WORLD, &status);
         MPI_Recv(&final_row, 1, MPI_INT, 0, MASTER_TO_SLAVE_TAG + 4+id, MPI_COMM_WORLD, &status);
         
         /*printf("Recebi da linha %d ate %d no processo %d\n",initial_row,final_row,id);
         fflush(stdout);*/
 
-        //int portion_L=(final_row-initial_row)*num_Features;
+        
 
 
         int init_row=final_row-initial_row;
@@ -308,10 +297,7 @@ int main(int argc, char* argv[])
       
         L_hold = MatrixInit(init_row, num_Features);
 
-        /*printf("iniciei L na slave %d\n",id);
-        fflush(stdout);*/
-        //MPI_Recv(&L[0], portion_L , MPI_DOUBLE, 0, MASTER_TO_SLAVE_TAG , MPI_COMM_WORLD, &status);
-        //MPI_Recv(&L_hold[0], portion_L , MPI_DOUBLE, 0, MASTER_TO_SLAVE_TAG + 1, MPI_COMM_WORLD, &status);
+
 
 
         MPI_Recv(&iterations, 1, MPI_INT, 0, MASTER_TO_SLAVE_TAG  , MPI_COMM_WORLD, &status);
@@ -324,23 +310,19 @@ int main(int argc, char* argv[])
 
         R = MatrixInit( num_Features,num_Items);
         R_hold = MatrixInit(  num_Features,num_Items);
-       /* printf("iniciei R na slave %d\n",id);
-        fflush(stdout);*/
+
         
 
         
-        //MPI_Recv(&R[0], num_Items*num_Features , MPI_DOUBLE, 0, MASTER_TO_SLAVE_TAG + 2, MPI_COMM_WORLD, &status);
-        //MPI_Recv(&R_hold[0], num_Items*num_Features , MPI_DOUBLE, 0, MASTER_TO_SLAVE_TAG + 3, MPI_COMM_WORLD, &status);
+       
         MPI_Recv(&slaves[0], p , mpi_division_slaves, 0, MASTER_TO_SLAVE_TAG , MPI_COMM_WORLD, &status);
 
 
         random_fill_LR(L,R,num_Users,num_Items,num_Features,slaves[id].initial_row,slaves[id].final_row);
-        /*printf("fiz random na slave %d\n",id);
-        fflush(stdout);*/
+
         R = transpose(R,num_Features, num_Items);  
         R_hold = transpose(R_hold, num_Features, num_Items); 
-        /*printf("fiz transpose na slave %d\n",id);
-        fflush(stdout);   */          
+         
 
         L1 = L;
         L2 = L_hold; 
@@ -356,7 +338,6 @@ int main(int argc, char* argv[])
         matrix_mul(L1,R1,init->v,upper_bound-lower_bound,num_Features,slaves[id].initial_row,init_row);
     
 
-        //MPI_Isend(&init->v[0], (slaves[id].upper_bound - slaves[id].lower_bound), mpi_non_zero, 0, SLAVE_TO_MASTER_TAG + 2, MPI_COMM_WORLD, &request);
         
 
            
@@ -366,21 +347,16 @@ int main(int argc, char* argv[])
     
     if(id==0){
         matrix_mul(L1, R1, init->v, upper_bound-lower_bound , init->nF,slaves[id].initial_row,slaves[id].final_row-slaves[id].initial_row); 
-        /*for(int i = 1 ; i<p ;i++){ // master process receives all results
-            MPI_Recv(&init->v[slaves[i].lower_bound], (slaves[i].upper_bound - slaves[i].lower_bound) , mpi_non_zero, i, SLAVE_TO_MASTER_TAG + 2, MPI_COMM_WORLD, &status);
-        
-        }  */ 
+
   
     }
 
     aux_sum_R= MatrixInit(num_Items, num_Features);
-    /*printf("fiz init da aux_R slave %d\n",id);
-    fflush(stdout);*/
+
     
     int *displs = (int *)malloc(p*sizeof(int)); 
     int *scounts = (int *)malloc(p*sizeof(int));
-    /*printf("fiz init do DISPLAY slave %d\n",id);
-    fflush(stdout); */    
+   
     for (int i=0; i<p; i++) { 
         displs[i] = slaves[i].initial_L; 
         scounts[i] = slaves[i].num_elements_L; 
@@ -407,8 +383,7 @@ int main(int argc, char* argv[])
     
     int user_portion;
     user_portion= slaves[id].final_row-slaves[id].initial_row;  
-    /*printf("VOU INICIAR O FOR no process =%d\n",id);
-    fflush(stdout); */  
+ 
     for(int i = 0 ; i < iterations ; i++){
         //update the matrix
         /*if(i==5){
@@ -438,8 +413,6 @@ int main(int argc, char* argv[])
         }
 
 
-
-        //printf("iteracao %d process = %d\n",i,id);
         matrix_mul(L1,R1,init->v,slaves[id].upper_bound-slaves[id].lower_bound,num_Features,slaves[id].initial_row,user_portion);
 
     
@@ -480,7 +453,7 @@ int main(int argc, char* argv[])
     }
 
         
-    //}
+    
     free(result_per_process);
     free(init->v);
     free(init);    
