@@ -88,6 +88,17 @@ int find_upper_bound(int lower_row,int upper_row,int lower_bound,non_zero *v,int
 
 
 
+void copyPartMatrix(double* from, double* to_1,double* to_2,int rows, int columns)
+{
+    for (int i = 0; i < rows; i++)
+        for(int j = 0; j < columns; j++){
+            to_1[INDEX(i,j,columns)]=from[INDEX(i,j,columns)] ;  
+            to_2[INDEX(i,j,columns)]=from[INDEX(i,j,columns)] ; 
+        } 
+
+}
+
+
 
 /***************************************
 * printMatrix()
@@ -162,12 +173,23 @@ double* MatrixInit(int rows, int columns)
 * Description: random initialization of matrices L and R
 *
 ***************************************/
-void random_fill_LR(double* L_, double* R_, int nU, int nI, int nF)
+void random_fill_LR(double* L_, double* R_, int nU, int nI, int nF, int initial_row,int final_row)
 {   
     srandom(0);
-    for(int i = 0; i < nU; i++)
-        for(int j = 0; j < nF; j++)
-            L_[INDEX(i,j,nF)] = RAND01 / (double) nF;
+    double aux;
+    int pos_row;
+    for(int i = 0; i < nU; i++){
+        for(int j = 0; j < nF; j++){
+            if(i>=initial_row && i<final_row){
+                pos_row=i-initial_row;
+                L_[INDEX(pos_row,j,nF)] = RAND01 / (double) nF;
+            }
+            else{
+                aux = RAND01 / (double) nF;
+            }
+                
+        }
+    }
 
     for(int i = 0; i < nF; i++)
         for(int j = 0; j < nI; j++)
@@ -222,19 +244,25 @@ double* transpose(double* matrix, int rows, int columns)
 *
 ***************************************/
 
-void matrix_mul(double *firstMatrix, double *secondMatrix, non_zero* v, int num_zeros ,int nF){
-    int start= v[0].row;
+void matrix_mul(double *firstMatrix, double *secondMatrix, non_zero* v, int num_zeros ,int nF,int start,int num_users){
+
+
     for (int z = 0; z < num_zeros; z++){
         int i = v[z].row;
         int j = v[z].column;
         int pos_row=0;
-        v[z].B = 0;
+        //v[z].B = 0;
+        double sum=0;
         for (int k = 0; k < nF; k++){
             pos_row=i-start;
-         
-            v[z].B += firstMatrix[INDEX(pos_row,k,nF)]*secondMatrix[INDEX(j,k,nF)];
+            //printf("first L =%f  sec R=%f\n ",firstMatrix[INDEX(pos_row,k,nF)],secondMatrix[INDEX(j,k,nF)]);
+            sum+= firstMatrix[INDEX(pos_row,k,nF)]*secondMatrix[INDEX(j,k,nF)];
         }
+        v[z].B=sum;
+        //printf("sum =%f row :%d col:%d\n",sum,i,j);
+
     }
+    
 }
 
 /***************************************
@@ -294,9 +322,10 @@ void recalculate_Matrix(double* L, double* R, double* pre_L, double* pre_R, int 
  
     zero_LR(L, R, nU, nI, nF);
     
-    int start= v[0].row;
+    int start= slaves[id].initial_row;
     
     int pos_row;
+
     for (z = 0; z < num_zeros; z++){
         i = v[z].row;
         j = v[z].column;
@@ -305,6 +334,7 @@ void recalculate_Matrix(double* L, double* R, double* pre_L, double* pre_R, int 
 
         for(int k = 0; k < nF; k++){
             pos_row=i-start;
+
             L[INDEX(pos_row,k,nF)] += (a-b)*(pre_R[INDEX(j,k,nF)]);
             R[INDEX(j,k,nF)] += (a-b)*(pre_L[INDEX(pos_row,k,nF)]);
         }
@@ -338,34 +368,40 @@ void recalculate_Matrix(double* L, double* R, double* pre_L, double* pre_R, int 
 *
 ***************************************/
 
-void create_output(non_zero *v, int nU, int nI, int nF, double* L, double* R, int num_zeros){
+void create_output(non_zero *v, int nU, int nI, int nF, double* L, double* R, int num_zeros,int *result,int start){
     
     int i,j,k;
     int z = 0;
     double element;
     int position;
 
+    //printf("num users=%d\n",nU);
     for(i = 0 ; i < nU ;i++){
         double max = -DBL_MAX;
         element = 0;
         position = -1;
 
         for(j = 0 ; j < nI ;j++){
-            if(v[z].row == i && v[z].column == j && z < num_zeros){
+            if(v[z].row == i + start && v[z].column == j && z < num_zeros){
                 z++;
                 continue;
             }
 
             element = 0;
-            for (k = 0; k < nF; k++)
+            for (k = 0; k < nF; k++){
+                //printf("first L =%f  sec R=%f\n ",L[INDEX(i,k,nF)],R[INDEX(j,k,nF)]);
                 element += L[INDEX(i,k,nF)] * R[INDEX(j,k,nF)];
+                
+            }
+            //printf("element =%f user: %d item: %d \n",element,i,j);
 
             if (element > max){
                 max = element;
                 position = j;
             }
         }
-        printf("%d\n",position);
+        result[i]=position;
+        //printf("%d\n",position);
     }
     
 }
