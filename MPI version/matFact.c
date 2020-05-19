@@ -18,6 +18,7 @@ MPI_Request request_rec_0;
 MPI_Request request_rec_1;
 
 int main(int argc, char* argv[])
+
 {   
 
     MPI_Init(&argc, &argv);
@@ -120,7 +121,6 @@ int main(int argc, char* argv[])
         //divisao das matrizes para os slaves
         
        
-       
         int my_up;
         int my_lower;
 
@@ -166,7 +166,6 @@ int main(int argc, char* argv[])
             MPI_Isend(&L1[INDEX(initial_row,0,init->nF)], portion_L, MPI_DOUBLE, i, MASTER_TO_SLAVE_TAG , MPI_COMM_WORLD, &request);
             MPI_Isend(&L2[INDEX(initial_row,0,init->nF)], portion_L, MPI_DOUBLE, i, MASTER_TO_SLAVE_TAG + 1 , MPI_COMM_WORLD, &request);
             
-            
 
             MPI_Isend(&init->iter, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG  , MPI_COMM_WORLD, &request);
             MPI_Isend(&init->alpha, 1, MPI_DOUBLE, i, MASTER_TO_SLAVE_TAG + 2 , MPI_COMM_WORLD, &request); 
@@ -174,11 +173,8 @@ int main(int argc, char* argv[])
             MPI_Isend(&init->nI, 1, MPI_INT, i, MASTER_TO_SLAVE_TAG , MPI_COMM_WORLD, &request);
             MPI_Isend(&R[0], init->nF*init->nI , MPI_DOUBLE, i, MASTER_TO_SLAVE_TAG +2 , MPI_COMM_WORLD, &request);
             MPI_Isend(&R_hold[0], init->nF*init->nI, MPI_DOUBLE, i, MASTER_TO_SLAVE_TAG + 3 , MPI_COMM_WORLD, &request);
-            
-                    
-            lower_bound=upper_bound;
-            
-            
+        
+            lower_bound=upper_bound;        
         }
 
         lower_bound=my_lower;
@@ -254,11 +250,6 @@ int main(int argc, char* argv[])
         MPI_Isend(&lower_bound, 1, MPI_INT, 0, SLAVE_TO_MASTER_TAG, MPI_COMM_WORLD, &request);
         MPI_Isend(&upper_bound, 1, MPI_INT, 0, SLAVE_TO_MASTER_TAG + 1, MPI_COMM_WORLD, &request);
         MPI_Isend(&init->v[0], (upper_bound - lower_bound), mpi_non_zero, 0, SLAVE_TO_MASTER_TAG + 2, MPI_COMM_WORLD, &request);
-        
-
-           
-             
-               
     }
     
     if(id==0){
@@ -366,10 +357,8 @@ int main(int argc, char* argv[])
                 
         }        
         
-
         MPI_Scatterv(&aux_sum_L[0], rcounts, displs, MPI_DOUBLE, &L1[0] , rcounts[id], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-        
         MPI_Bcast(&R1[0],num_Items*num_Features , MPI_DOUBLE, 0, MPI_COMM_WORLD );
 
         matrix_mul(L1,R1,init->v,slaves[id].upper_bound-slaves[id].lower_bound,num_Features);
