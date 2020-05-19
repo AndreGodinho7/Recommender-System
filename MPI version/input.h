@@ -4,7 +4,6 @@
 
 
 struct _non_zero{
-  int process;
   int row;
   int column;
   double A;
@@ -18,8 +17,9 @@ struct _division_mpi{
   int lower_bound;
   int upper_bound;
   int initial_L;
-  int final_L;
   int num_elements_L;
+  int initial_row;
+  int final_row;
 };
 
 typedef struct _division_mpi division_mpi;
