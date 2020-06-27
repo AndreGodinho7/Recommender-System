@@ -1,4 +1,4 @@
-# Recommender-System
+# Matrix factorization in Recommender systems by using parallel and distributed computation
 For this project we implemented a sequential and two parallel implementations of a matrix factorization routine used in some recommender systems in C programming language by using OpenMP and Open MPI.
 
 Grade: 18/20
